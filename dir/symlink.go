@@ -8,7 +8,7 @@ import (
 )
 
 // WalkFunc is a local type alias for `filepath.WalkFunc`
-// type WalkFunc = filepath.WalkFunc
+type WalkFunc = filepath.WalkFunc
 
 // ErrRecursiveSymlink is a sentinel error returned during symlink traversal if
 // the target path is a symlink that has already been visited.
