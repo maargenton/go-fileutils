@@ -1,30 +1,28 @@
-package fileutil_test
+package dir_test
 
 import (
-	"os"
 	"path"
-	"path/filepath"
 	"testing"
 
-	"github.com/maargenton/fileutil"
+	"github.com/maargenton/fileutil/dir"
 	"github.com/maargenton/go-testpredicate/pkg/asserter"
 	"github.com/maargenton/go-testpredicate/pkg/p"
 )
 
 // ---------------------------------------------------------------------------
-// fileutil.NewGlobMatcher()
+// dir.NewGlobMatcher()
 
 func TestNewGlobMatcherError(t *testing.T) {
 	assert := asserter.New(t, asserter.AbortOnError())
 	assert.That(nil, p.IsNil())
 
 	pattern := `**/src/*.{c,cc,cpp`
-	g, err := fileutil.NewGlobMatcher(pattern)
+	g, err := dir.NewGlobMatcher(pattern)
 	assert.That(err, p.IsNotNil())
 	assert.That(g, p.IsNil())
 }
 
-// fileutil.NewGlobMatcher()
+// dir.NewGlobMatcher()
 // ---------------------------------------------------------------------------
 
 // ---------------------------------------------------------------------------
@@ -35,7 +33,7 @@ func TestGlobMatcherMatch(t *testing.T) {
 	assert.That(nil, p.IsNil())
 
 	pattern := `content/**/src/**/*.{c,cc,cpp,h,hh,hpp}`
-	g, err := fileutil.NewGlobMatcher(pattern)
+	g, err := dir.NewGlobMatcher(pattern)
 	assert.That(err, p.IsNoError())
 	assert.That(g, p.IsNotNil())
 	assert.That(g.Match("aaa/bbb/src/ccc/ddd/something.cpp"), p.IsFalse())
@@ -48,7 +46,7 @@ func TestGlobMatcherMatchWithWildcardStart(t *testing.T) {
 	assert.That(nil, p.IsNil())
 
 	pattern := `**/src/**/*.{c,cc,cpp,h,hh,hpp}`
-	g, err := fileutil.NewGlobMatcher(pattern)
+	g, err := dir.NewGlobMatcher(pattern)
 	assert.That(err, p.IsNoError())
 	assert.That(g, p.IsNotNil())
 	assert.That(g.Match("aaa/bbb/src/ccc/ddd/something.cpp"), p.IsTrue())
@@ -67,7 +65,7 @@ func TestGlobMatcherPrefixMatch(t *testing.T) {
 	assert.That(nil, p.IsNil())
 
 	pattern := `content/**/src/**/*.{c,cc,cpp,h,hh,hpp}`
-	g, err := fileutil.NewGlobMatcher(pattern)
+	g, err := dir.NewGlobMatcher(pattern)
 	assert.That(err, p.IsNoError())
 	assert.That(g, p.IsNotNil())
 
@@ -91,7 +89,7 @@ func TestGlobMatcherPrefixMatchNoMatch(t *testing.T) {
 	assert.That(nil, p.IsNil())
 
 	pattern := `src`
-	g, err := fileutil.NewGlobMatcher(pattern)
+	g, err := dir.NewGlobMatcher(pattern)
 	assert.That(err, p.IsNoError())
 	assert.That(g, p.IsNotNil())
 
@@ -108,7 +106,7 @@ func TestGlobMatcherPrefixMatchWithLeadingWildcardAlwaysMatch(t *testing.T) {
 	assert.That(nil, p.IsNil())
 
 	pattern := `**/src`
-	g, err := fileutil.NewGlobMatcher(pattern)
+	g, err := dir.NewGlobMatcher(pattern)
 	assert.That(err, p.IsNoError())
 	assert.That(g, p.IsNotNil())
 
@@ -124,35 +122,6 @@ func TestGlobMatcherPrefixMatchWithLeadingWildcardAlwaysMatch(t *testing.T) {
 // ---------------------------------------------------------------------------
 // GlobMatcher.Walk()
 
-func touch(filename string) (err error) {
-	dirname := filepath.Dir(filename)
-	err = os.MkdirAll(dirname, 0777)
-	if err != nil {
-		return
-	}
-
-	f, err := os.OpenFile(filename, os.O_APPEND|os.O_CREATE, 0666)
-	if err != nil {
-		return err
-	}
-	return f.Close()
-}
-
-func setupTestFs(basepath string) (cleanup func(), err error) {
-
-	cleanup = func() {
-		os.RemoveAll(basepath)
-	}
-
-	for _, n := range []string{"foo", "bar", "aaa", "bbb"} {
-		touch(filepath.Join(basepath, "src", n, n+".h"))
-		touch(filepath.Join(basepath, "src", n, n+".cpp"))
-		touch(filepath.Join(basepath, "src", n, n+"_test.cpp"))
-	}
-
-	return
-}
-
 func TestGlobMatcherGlob(t *testing.T) {
 	var tcs = []struct {
 		pattern string
@@ -166,8 +135,7 @@ func TestGlobMatcherGlob(t *testing.T) {
 	}
 
 	assert := asserter.New(t, asserter.AbortOnError())
-	basepath := "setup_test_fs"
-	cleanup, err := setupTestFs(basepath)
+	basepath, cleanup, err := setupTestFolder()
 	assert.That(err, p.IsNoError())
 	defer cleanup()
 
@@ -177,7 +145,7 @@ func TestGlobMatcherGlob(t *testing.T) {
 			assert.That(true, p.IsTrue())
 
 			pattern := path.Join(basepath, tc.pattern)
-			m, err := fileutil.NewGlobMatcher(pattern)
+			m, err := dir.NewGlobMatcher(pattern)
 			assert.That(err, p.IsNoError())
 
 			matches, err := m.Glob()

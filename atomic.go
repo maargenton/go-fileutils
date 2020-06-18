@@ -30,7 +30,6 @@ func ReadFile(filename string, reader func(r io.Reader) error) error {
 		return err
 	}
 	defer f.Close()
-
 	return reader(f)
 }
 

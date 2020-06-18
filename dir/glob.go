@@ -1,4 +1,4 @@
-package fileutil
+package dir
 
 import (
 	"fmt"
@@ -14,10 +14,11 @@ import (
 // pattern. The pattern must be specified according to the extended glob pattern
 // described in the package level documentation.
 func Glob(pattern string) (matches []string, err error) {
-
-	// fastwalk.Walk("", nil)
-	// filepath.Walk()
-	return
+	globber, err := NewGlobMatcher(pattern)
+	if err != nil {
+		return
+	}
+	return globber.Glob()
 }
 
 // GlobFrom scans the file tree starting at basepath and returns a list of
@@ -27,22 +28,22 @@ func Glob(pattern string) (matches []string, err error) {
 // level documentation. If the pattern is absolute, the basepath is ignored and
 // will not appear as a prefix in the matches.
 func GlobFrom(basepath, pattern string) (matches []string, err error) {
-
-	// filepath.Walk()
-	return
+	globber, err := NewGlobMatcher(pattern)
+	if err != nil {
+		return
+	}
+	return globber.GlobFrom(basepath)
 }
-
-// WalkFunc is an alias of filepath.WalkFunc
-type WalkFunc = filepath.WalkFunc
 
 // Scan scans the file tree for filenames matching the pattern and call the
 // walkFn function for every match. The pattern must be specified according to
 // the extended glob pattern described in the package level documentation.
 func Scan(pattern string, walkFn WalkFunc) error {
-
-	// func Walk(root string, walkFn WalkFunc) error {
-	// filepath.Walk()
-	return nil
+	globber, err := NewGlobMatcher(pattern)
+	if err != nil {
+		return err
+	}
+	return globber.Scan(walkFn)
 }
 
 // ScanFrom scans the file tree starting at basepath for filenames matching the
@@ -52,9 +53,11 @@ func Scan(pattern string, walkFn WalkFunc) error {
 // described in the package level documentation. If the pattern is absolute, the
 // basepath is ignored and will not appear as a prefix in the matches.
 func ScanFrom(basepath, pattern string, walkFn WalkFunc) error {
-
-	// filepath.Walk()
-	return nil
+	globber, err := NewGlobMatcher(pattern)
+	if err != nil {
+		return err
+	}
+	return globber.ScanFrom(basepath, walkFn)
 }
 
 // ---------------------------------------------------------------------------
@@ -185,11 +188,22 @@ func (m *GlobMatcher) Glob() (matches []string, err error) {
 	return
 }
 
+// GlobFrom scans the file tree and returns a list of filenames matching the
+// pattern. The pattern must be specified according to the extended glob pattern
+// described in the package level documentation.
+func (m *GlobMatcher) GlobFrom(basepath string) (matches []string, err error) {
+	err = m.ScanFrom(basepath, func(path string, info os.FileInfo, err error) error {
+		matches = append(matches, path)
+		return err
+	})
+	return
+}
+
 // Scan scans the file tree for filenames matching the pattern and call the
 // walkFn function for every match. The pattern must be specified according to
 // the extended glob pattern described in the package level documentation.
 func (m *GlobMatcher) Scan(walkFn WalkFunc) error {
-	return filepath.Walk(m.prefix,
+	return Walk(m.prefix,
 		func(path string, info os.FileInfo, err error) error {
 			if info.IsDir() && !m.PrefixMatch(path) {
 				return filepath.SkipDir
@@ -199,6 +213,24 @@ func (m *GlobMatcher) Scan(walkFn WalkFunc) error {
 			}
 			return err
 		},
+	)
+}
+
+// ScanFrom scans the file tree for filenames matching the pattern and call the
+// walkFn function for every match. The pattern must be specified according to
+// the extended glob pattern described in the package level documentation.
+func (m *GlobMatcher) ScanFrom(basepath string, walkFn WalkFunc) error {
+	basepath = filepath.Join(basepath, m.prefix)
+	return Walk(basepath, MakeRelativeWalkFunc(basepath,
+		func(path string, info os.FileInfo, err error) error {
+			if info.IsDir() && !m.PrefixMatch(path) {
+				return filepath.SkipDir
+			}
+			if m.Match(path) {
+				return walkFn(path, info, err)
+			}
+			return err
+		}),
 	)
 }
 
