@@ -1,30 +1,31 @@
-package fileutil_test
+package dir_test
 
 import (
+	"io/ioutil"
 	"os"
 	"path"
 	"path/filepath"
 	"testing"
 
-	"github.com/maargenton/fileutil"
+	"github.com/maargenton/fileutil/dir"
 	"github.com/maargenton/go-testpredicate/pkg/asserter"
 	"github.com/maargenton/go-testpredicate/pkg/p"
 )
 
 // ---------------------------------------------------------------------------
-// fileutil.NewGlobMatcher()
+// dir.NewGlobMatcher()
 
 func TestNewGlobMatcherError(t *testing.T) {
 	assert := asserter.New(t, asserter.AbortOnError())
 	assert.That(nil, p.IsNil())
 
 	pattern := `**/src/*.{c,cc,cpp`
-	g, err := fileutil.NewGlobMatcher(pattern)
+	g, err := dir.NewGlobMatcher(pattern)
 	assert.That(err, p.IsNotNil())
 	assert.That(g, p.IsNil())
 }
 
-// fileutil.NewGlobMatcher()
+// dir.NewGlobMatcher()
 // ---------------------------------------------------------------------------
 
 // ---------------------------------------------------------------------------
@@ -35,7 +36,7 @@ func TestGlobMatcherMatch(t *testing.T) {
 	assert.That(nil, p.IsNil())
 
 	pattern := `content/**/src/**/*.{c,cc,cpp,h,hh,hpp}`
-	g, err := fileutil.NewGlobMatcher(pattern)
+	g, err := dir.NewGlobMatcher(pattern)
 	assert.That(err, p.IsNoError())
 	assert.That(g, p.IsNotNil())
 	assert.That(g.Match("aaa/bbb/src/ccc/ddd/something.cpp"), p.IsFalse())
@@ -48,7 +49,7 @@ func TestGlobMatcherMatchWithWildcardStart(t *testing.T) {
 	assert.That(nil, p.IsNil())
 
 	pattern := `**/src/**/*.{c,cc,cpp,h,hh,hpp}`
-	g, err := fileutil.NewGlobMatcher(pattern)
+	g, err := dir.NewGlobMatcher(pattern)
 	assert.That(err, p.IsNoError())
 	assert.That(g, p.IsNotNil())
 	assert.That(g.Match("aaa/bbb/src/ccc/ddd/something.cpp"), p.IsTrue())
@@ -67,7 +68,7 @@ func TestGlobMatcherPrefixMatch(t *testing.T) {
 	assert.That(nil, p.IsNil())
 
 	pattern := `content/**/src/**/*.{c,cc,cpp,h,hh,hpp}`
-	g, err := fileutil.NewGlobMatcher(pattern)
+	g, err := dir.NewGlobMatcher(pattern)
 	assert.That(err, p.IsNoError())
 	assert.That(g, p.IsNotNil())
 
@@ -91,7 +92,7 @@ func TestGlobMatcherPrefixMatchNoMatch(t *testing.T) {
 	assert.That(nil, p.IsNil())
 
 	pattern := `src`
-	g, err := fileutil.NewGlobMatcher(pattern)
+	g, err := dir.NewGlobMatcher(pattern)
 	assert.That(err, p.IsNoError())
 	assert.That(g, p.IsNotNil())
 
@@ -108,7 +109,7 @@ func TestGlobMatcherPrefixMatchWithLeadingWildcardAlwaysMatch(t *testing.T) {
 	assert.That(nil, p.IsNil())
 
 	pattern := `**/src`
-	g, err := fileutil.NewGlobMatcher(pattern)
+	g, err := dir.NewGlobMatcher(pattern)
 	assert.That(err, p.IsNoError())
 	assert.That(g, p.IsNotNil())
 
@@ -124,11 +125,10 @@ func TestGlobMatcherPrefixMatchWithLeadingWildcardAlwaysMatch(t *testing.T) {
 // ---------------------------------------------------------------------------
 // GlobMatcher.Walk()
 
-func touch(filename string) (err error) {
+func touch(filename string) error {
 	dirname := filepath.Dir(filename)
-	err = os.MkdirAll(dirname, 0777)
-	if err != nil {
-		return
+	if err := os.MkdirAll(dirname, 0777); err != nil {
+		return err
 	}
 
 	f, err := os.OpenFile(filename, os.O_APPEND|os.O_CREATE, 0666)
@@ -138,19 +138,26 @@ func touch(filename string) (err error) {
 	return f.Close()
 }
 
-func setupTestFs(basepath string) (cleanup func(), err error) {
+func touchAll(filenames []string) error {
 
-	cleanup = func() {
-		os.RemoveAll(basepath)
+	for _, filename := range filenames {
+		if err := touch(filename); err != nil {
+			return err
+		}
 	}
+	return nil
+}
 
+func setupTestFs(basepath string) error {
+	var filenames []string
 	for _, n := range []string{"foo", "bar", "aaa", "bbb"} {
-		touch(filepath.Join(basepath, "src", n, n+".h"))
-		touch(filepath.Join(basepath, "src", n, n+".cpp"))
-		touch(filepath.Join(basepath, "src", n, n+"_test.cpp"))
+		filenames = append(filenames,
+			filepath.Join(basepath, "src", n, n+".h"),
+			filepath.Join(basepath, "src", n, n+".cpp"),
+			filepath.Join(basepath, "src", n, n+"_test.cpp"),
+		)
 	}
-
-	return
+	return touchAll(filenames)
 }
 
 func TestGlobMatcherGlob(t *testing.T) {
@@ -166,18 +173,19 @@ func TestGlobMatcherGlob(t *testing.T) {
 	}
 
 	assert := asserter.New(t, asserter.AbortOnError())
-	basepath := "setup_test_fs"
-	cleanup, err := setupTestFs(basepath)
+	dirname, err := ioutil.TempDir(".", "testdata-")
 	assert.That(err, p.IsNoError())
-	defer cleanup()
+	defer os.RemoveAll(dirname) // clean up
+	err = setupTestFs(dirname)
+	assert.That(err, p.IsNoError())
 
 	for _, tc := range tcs {
 		t.Run(tc.pattern, func(t *testing.T) {
 			assert := asserter.New(t, asserter.AbortOnError())
 			assert.That(true, p.IsTrue())
 
-			pattern := path.Join(basepath, tc.pattern)
-			m, err := fileutil.NewGlobMatcher(pattern)
+			pattern := path.Join(dirname, tc.pattern)
+			m, err := dir.NewGlobMatcher(pattern)
 			assert.That(err, p.IsNoError())
 
 			matches, err := m.Glob()
