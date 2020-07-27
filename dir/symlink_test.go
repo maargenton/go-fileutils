@@ -1,7 +1,6 @@
 package dir_test
 
 import (
-	"fmt"
 	"os"
 	"path/filepath"
 	"strings"
@@ -114,9 +113,9 @@ func TestWalkReportsErrorOnInvalidSymlinks(t *testing.T) {
 		return nil
 	})
 
-	for _, r := range records {
-		fmt.Printf("%v - %v - %v\n", r.path, decodeMode(r.mode), r.err)
-	}
+	// for _, r := range records {
+	// 	fmt.Printf("%v - %v - %v\n", r.path, decodeMode(r.mode), r.err)
+	// }
 
 	src_src3 := records["src/src3"] // Symlink - lstat testdata-625528602_src2: no such file or directory
 	assert.That(os.IsNotExist(src_src3.err), p.IsTrue(), "error", src_src3.err)

@@ -1,6 +1,7 @@
 package dir_test
 
 import (
+	"os"
 	"path"
 	"testing"
 
@@ -120,9 +121,9 @@ func TestGlobMatcherPrefixMatchWithLeadingWildcardAlwaysMatch(t *testing.T) {
 // ---------------------------------------------------------------------------
 
 // ---------------------------------------------------------------------------
-// GlobMatcher.Walk()
+// dir.Glob()
 
-func TestGlobMatcherGlob(t *testing.T) {
+func TestGlob(t *testing.T) {
 	var tcs = []struct {
 		pattern string
 		count   int
@@ -145,16 +146,164 @@ func TestGlobMatcherGlob(t *testing.T) {
 			assert.That(true, p.IsTrue())
 
 			pattern := path.Join(basepath, tc.pattern)
-			m, err := dir.NewGlobMatcher(pattern)
-			assert.That(err, p.IsNoError())
+			matches, err := dir.Glob(pattern)
 
-			matches, err := m.Glob()
 			assert.That(err, p.IsNoError())
 			assert.That(matches, p.Length(p.Eq(tc.count)))
-
+			assert.That(matches, p.All(p.StartsWith(basepath)))
 		})
 	}
 }
 
-// GlobMatcher.Walk()
+// dir.Glob()
+// ---------------------------------------------------------------------------
+
+// ---------------------------------------------------------------------------
+// GlobMatcher.GlobFrom()
+
+func TestGlobMatcherGlobFrom(t *testing.T) {
+	var tcs = []struct {
+		pattern string
+		count   int
+	}{
+		{`**/{foo,bar}/**/*_test.{c,cc,cpp}`, 2},
+		{`src/{foo,bar}/**/*_test.{c,cc,cpp}`, 2},
+		{`src/**/*_test.{c,cc,cpp}`, 4},
+		{`src/**/*_test.{h,hh,hpp}`, 0},
+		{`src/**/*.{h,cpp}`, 12},
+	}
+
+	assert := asserter.New(t, asserter.AbortOnError())
+	basepath, cleanup, err := setupTestFolder()
+	assert.That(err, p.IsNoError())
+	defer cleanup()
+
+	for _, tc := range tcs {
+		t.Run(tc.pattern, func(t *testing.T) {
+			assert := asserter.New(t, asserter.AbortOnError())
+			assert.That(true, p.IsTrue())
+
+			matches, err := dir.GlobFrom(basepath, tc.pattern)
+
+			assert.That(err, p.IsNoError())
+			assert.That(matches, p.Length(p.Eq(tc.count)))
+			assert.That(matches, p.All(p.StartsWith("src")))
+		})
+	}
+}
+
+// GlobMatcher.GlobFrom()
+// ---------------------------------------------------------------------------
+
+// ---------------------------------------------------------------------------
+// dir.Glob()
+
+func TestScan(t *testing.T) {
+	var tcs = []struct {
+		pattern string
+		count   int
+	}{
+		{`**/{foo,bar}/**/*_test.{c,cc,cpp}`, 2},
+		{`src/{foo,bar}/**/*_test.{c,cc,cpp}`, 2},
+		{`src/**/*_test.{c,cc,cpp}`, 4},
+		{`src/**/*_test.{h,hh,hpp}`, 0},
+		{`src/**/*.{h,cpp}`, 12},
+	}
+
+	assert := asserter.New(t, asserter.AbortOnError())
+	basepath, cleanup, err := setupTestFolder()
+	assert.That(err, p.IsNoError())
+	defer cleanup()
+
+	for _, tc := range tcs {
+		t.Run(tc.pattern, func(t *testing.T) {
+			assert := asserter.New(t, asserter.AbortOnError())
+			assert.That(true, p.IsTrue())
+
+			var count = 0
+			var countingWalk = func(path string, info os.FileInfo, err error) error {
+				count++
+				return nil
+			}
+
+			err = dir.Scan(path.Join(basepath, tc.pattern), countingWalk)
+
+			assert.That(err, p.IsNoError())
+			assert.That(count, p.Eq(tc.count))
+		})
+	}
+}
+
+// dir.Scan()
+// ---------------------------------------------------------------------------
+
+// ---------------------------------------------------------------------------
+// GlobMatcher.ScanFrom()
+
+func TestGlobMatcherScanFrom(t *testing.T) {
+	var tcs = []struct {
+		pattern string
+		count   int
+	}{
+		{`**/{foo,bar}/**/*_test.{c,cc,cpp}`, 2},
+		{`src/{foo,bar}/**/*_test.{c,cc,cpp}`, 2},
+		{`src/**/*_test.{c,cc,cpp}`, 4},
+		{`src/**/*_test.{h,hh,hpp}`, 0},
+		{`src/**/*.{h,cpp}`, 12},
+	}
+
+	assert := asserter.New(t, asserter.AbortOnError())
+	basepath, cleanup, err := setupTestFolder()
+	assert.That(err, p.IsNoError())
+	defer cleanup()
+
+	for _, tc := range tcs {
+		t.Run(tc.pattern, func(t *testing.T) {
+			assert := asserter.New(t, asserter.AbortOnError())
+			assert.That(true, p.IsTrue())
+
+			var count = 0
+			var countingWalk = func(path string, info os.FileInfo, err error) error {
+				count++
+				return nil
+			}
+
+			err = dir.ScanFrom(basepath, tc.pattern, countingWalk)
+
+			assert.That(err, p.IsNoError())
+			assert.That(count, p.Eq(tc.count))
+		})
+	}
+}
+
+// GlobMatcher.ScanFrom()
+// ---------------------------------------------------------------------------
+
+// ---------------------------------------------------------------------------
+// Test error path for dir.Glob, dir.GlobFrom, dir.Scan, dir.ScanFrom
+
+func TestGlobFunctionsErrorWithBadPattern(t *testing.T) {
+	assert := asserter.New(t, asserter.AbortOnError())
+	basepath, cleanup, err := setupTestFolder()
+	assert.That(err, p.IsNoError())
+	defer cleanup()
+
+	var dummyWalk = func(path string, info os.FileInfo, err error) error {
+		return err
+	}
+
+	_, err = dir.Glob(path.Join(basepath, "src/**/*/{"))
+	assert.That(err, p.IsNotNil())
+
+	_, err = dir.GlobFrom(basepath, "src/**/*/{")
+	assert.That(err, p.IsNotNil())
+
+	err = dir.Scan(path.Join(basepath, "src/**/*/{"), dummyWalk)
+	assert.That(err, p.IsNotNil())
+
+	err = dir.ScanFrom(basepath, "src/**/*/{", dummyWalk)
+	assert.That(err, p.IsNotNil())
+}
+
+// Test error path for dir.Glob, dir.GlobFrom, dir.Scan, dir.ScanFrom
 // ---------------------------------------------------------------------------

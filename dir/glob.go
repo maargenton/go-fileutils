@@ -220,8 +220,8 @@ func (m *GlobMatcher) Scan(walkFn WalkFunc) error {
 // walkFn function for every match. The pattern must be specified according to
 // the extended glob pattern described in the package level documentation.
 func (m *GlobMatcher) ScanFrom(basepath string, walkFn WalkFunc) error {
-	basepath = filepath.Join(basepath, m.prefix)
-	return Walk(basepath, MakeRelativeWalkFunc(basepath,
+	walkroot := filepath.Join(basepath, m.prefix)
+	return Walk(walkroot, MakeRelativeWalkFunc(basepath,
 		func(path string, info os.FileInfo, err error) error {
 			if info.IsDir() && !m.PrefixMatch(path) {
 				return filepath.SkipDir

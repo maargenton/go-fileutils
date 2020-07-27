@@ -182,6 +182,7 @@ func TestGlobFragmentToRegexp(t *testing.T) {
 		{`\{a,b}`, `^\{a,b}$`, "{a,b}"},
 		{`*_test.{c,cc,cpp}`, `^.*_test\.(?:(?:c)|(?:cc)|(?:cpp))$`, "foo_test.cc"},
 		{`\a\b\c\{\.`, `^abc\{\.$`, "abc{."},
+		{`{,*_}main.cpp`, `^(?:(?:)|(?:.*_))main\.cpp$`, "main.cpp"},
 	}
 
 	for _, tc := range tcs {
