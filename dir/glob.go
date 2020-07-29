@@ -205,7 +205,7 @@ func (m *GlobMatcher) GlobFrom(basepath string) (matches []string, err error) {
 func (m *GlobMatcher) Scan(walkFn WalkFunc) error {
 	return Walk(m.prefix,
 		func(path string, info os.FileInfo, err error) error {
-			if info.IsDir() && !m.PrefixMatch(path) {
+			if info != nil && info.IsDir() && !m.PrefixMatch(path) {
 				return filepath.SkipDir
 			}
 			if m.Match(path) {
@@ -223,7 +223,7 @@ func (m *GlobMatcher) ScanFrom(basepath string, walkFn WalkFunc) error {
 	walkroot := filepath.Join(basepath, m.prefix)
 	return Walk(walkroot, MakeRelativeWalkFunc(basepath,
 		func(path string, info os.FileInfo, err error) error {
-			if info.IsDir() && !m.PrefixMatch(path) {
+			if info != nil && info.IsDir() && !m.PrefixMatch(path) {
 				return filepath.SkipDir
 			}
 			if m.Match(path) {
