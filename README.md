@@ -53,7 +53,7 @@ patterns:
 - `{foo,bar}` matches one occurrence of either `foo` or `bar` within a path fragment
 - `**/` allows the subsequent fragment to be matched anywhere within the directory tree. It should always be followed by another fragment matching expression.
 
-Symbolic links are followed safely as needed, emitting a `ErrRecursiveSymlink` each time a filesystem location is visited again.
+Symbolic links are followed safely as needed, emitting an `ErrRecursiveSymlink` each time a filesystem location is visited again.
 
 
 #### Examples
