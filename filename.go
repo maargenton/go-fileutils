@@ -45,7 +45,7 @@ func ExpandPath(input string) (output string, err error) {
 }
 
 // ExpandPathRelative returns the absolute path for the given input, expanding
-// environment variable and handling the special case `~/` refering to the
+// environment variable and handling the special case `~/` referring to the
 // current user home directory. If the resulting path after variable expansion
 // is relative, it is expanded relative to `basepath`. If the resulting path is
 // still relative, it is expanded relative to `$(pwd)`.  The function returns
