@@ -32,6 +32,9 @@ provided by the `filepath` package.
   filename in many common ways, like replacing either the extension or the
   containing directory, or inserting a prefix or suffix onto the basename of the
   file.
+- `fileutil.ExpandPath()` and `fileutil.ExpandPathRelative()` expand an relative
+  or absolute path into an absolute path, handling `~/` and environment variable
+  expansion, using ether `$(pwd)` or a given `basepath` as base path.
 
 ### Filesystem scanning and globing
 

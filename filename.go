@@ -1,6 +1,8 @@
 package fileutil
 
 import (
+	"fmt"
+	"os"
 	"path/filepath"
 	"strings"
 )
@@ -34,4 +36,51 @@ func RewriteFilename(input string, opts *RewriteOpts) string {
 		dirname = opts.Dirname
 	}
 	return filepath.Join(dirname, basename+extname)
+}
+
+// ExpandPath is similar to ExpandPathRelative with an empty `basepath`;
+// relative paths are expanded relative to `$(pwd)`.
+func ExpandPath(input string) (output string, err error) {
+	return expandPath(input, "")
+}
+
+// ExpandPathRelative returns the absolute path for the given input, expanding
+// environment variable and handling the special case `~/` refering to the
+// current user home directory. If the resulting path after variable expansion
+// is relative, it is expanded relative to `basepath`. If the resulting path is
+// still relative, it is expanded relative to `$(pwd)`.  The function returns
+// and error if one of the underlying calls fails (getting user home or process
+// working directory path).
+func ExpandPathRelative(input, basepath string) (output string, err error) {
+	return expandPath(input, basepath)
+}
+
+func expandPath(input, basepath string) (output string, err error) {
+	if input == "~" || input == "~/" {
+		output, err = os.UserHomeDir()
+		if err != nil {
+			err = fmt.Errorf("failed to expand path '%v', %w", input, err)
+		}
+		return
+	}
+
+	output = input
+	if strings.HasPrefix(input, "~/") {
+		home, err := os.UserHomeDir()
+		if err != nil {
+			return "", fmt.Errorf("failed to expand path '%v', %w", input, err)
+		}
+		output = filepath.Join(home, input[2:])
+	}
+
+	output = os.ExpandEnv(output)
+	if !filepath.IsAbs(output) {
+		output = filepath.Join(basepath, output)
+	}
+	output, err = filepath.Abs(output)
+	if err != nil {
+		return "", fmt.Errorf("failed to expand path '%v', %w", input, err)
+	}
+
+	return
 }
