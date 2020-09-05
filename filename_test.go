@@ -52,7 +52,7 @@ func setupTestEnv(env map[string]string) func() {
 		os.Setenv(k, v)
 	}
 	return func() {
-		for k, _ := range env {
+		for k := range env {
 			os.Unsetenv(k)
 		}
 	}
