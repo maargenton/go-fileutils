@@ -53,7 +53,7 @@ patterns:
 - `{foo,bar}` matches one occurrence of either `foo` or `bar` within a path fragment
 - `**/` allows the subsequent fragment to be matched anywhere within the directory tree. It should always be followed by another fragment matching expression.
 
-> **NOTE:** Scanning and globing functions are intended to be able to safely follow symbolic links while detecting and ignoring potential loops. However, as of v0.1.0, symbolic links are not supported yet.
+Symbolic links are followed safely as needed, emitting a `ErrRecursiveSymlink` each time a filesystem location is visited again.
 
 
 #### Examples
