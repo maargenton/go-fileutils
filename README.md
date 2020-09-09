@@ -74,6 +74,13 @@ patterns:
 Symbolic links are followed safely as needed, emitting an `ErrRecursiveSymlink`
 each time a filesystem location is visited again.
 
+#### Examples
+
+- `src/**/*_test.{c,cc,cpp}` : From `src`, find all files in any sub-directory
+  with an `_test` suffix and a `.c`, `.cc` or `.cpp` extension.
+- `src/**_test.cpp` is that same as `src/*_test.cpp`; the double star is
+  interpreted as two consecutive matches of zero or more.
+
 
 ### Sub-process execution
 
@@ -100,10 +107,3 @@ The behavior of stdout and stderr is controlled by 3 similar variables:
 Except for `StdoutReader` and `StderrReader` which are most likely stateful, the
 command object is stateless and can potentially be `Run()` multiple times,
 concurrently.
-
-#### Examples
-
-- `src/**/*_test.{c,cc,cpp}` : From `src`, find all files in any sub-directory
-  with an `_test` suffix and a `.c`, `.cc` or `.cpp` extension.
-- `src/**_test.cpp` is that same as `src/*_test.cpp`; the double star is
-  interpreted as two consecutive matches of zero or more.
