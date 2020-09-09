@@ -32,7 +32,8 @@ provided by the `filepath` package.
   the content written into the io.Writer passed to the closure. This guaranties
   that readers of that file will never see an incomplete or partially updated
   content.
-- `fileutil.Read()` reads the content of a file through the io.Reader passed to the closure.
+- `fileutil.Read()` reads the content of a file through the io.Reader passed to
+  the closure.
 - `fileutil.OpenTemp()` creates and opens a temporary file, in the same location
   and with the same extension as the target file. The resulting file is
   guarantied to not previously exists, and therefore never steps onto another
@@ -50,7 +51,7 @@ provided by the `filepath` package.
 
 ### Filesystem scanning and globing
 
-`fileutil.Glob()` and `fileutil.Scan()` are convenient functions to locate and
+`dir.Glob()` and `dir.Scan()` are convenient functions to locate and
 enumerate files matching a particular pattern. The pattern is specified as an
 extended glob pattern that can match deep subdirectories and alternative
 patterns:
@@ -73,6 +74,32 @@ patterns:
 Symbolic links are followed safely as needed, emitting an `ErrRecursiveSymlink`
 each time a filesystem location is visited again.
 
+
+### Sub-process execution
+
+`popen.Command` is an additional layer of abstraction over exec.Command aimed at
+simplifying common uses where the output of the process is captured or
+redirected. Unlike `exec.Command`, all the details of the command to run and
+what to do with its outputs are captured in public fields of the `Command`
+structure. The output streams, stdout and stderr, can be returned as a string,
+redirected to a file or stream-processed through an `io.Reader`. If the process
+is executed successfully but returns a non-zero exit status, the returned error
+is an exec.ExitError that contains the actual status code.
+
+The behavior of stdout and stderr is controlled by 3 similar variables:
+
+- When `WriteStdoutToFile` is set to the path of a destination file for the
+  content of the command stdout, `DiscardStdout` is ignored and the returned
+  stdout string is always empty. If needed, the output of the command can be
+  read back from that file.
+- When `StdoutReader` is set, the raw output of the command is still captured
+  and returned in the stdout string, unless `DiscardStdout` is set to `true`.
+- `WriteStdoutToFile` and `StdoutReader` can both be set, in which case the
+  output of the command is sent to both and the returned stdout string is empty.
+
+Except for `StdoutReader` and `StderrReader` which are most likely stateful, the
+command object is stateless and can potentially be `Run()` multiple times,
+concurrently.
 
 #### Examples
 
