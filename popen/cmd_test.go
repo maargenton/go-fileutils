@@ -4,6 +4,7 @@ import (
 	"bufio"
 	"context"
 	"errors"
+	"fmt"
 	"io"
 	"io/ioutil"
 	"os"
@@ -85,7 +86,7 @@ func TestCommandStdoutReader(t *testing.T) {
 
 	var buf strings.Builder
 	var cmd = popen.Command{
-		Command: "sh",
+		Command: "bash",
 		Arguments: []string{
 			"-c",
 			"for i in {1..10}; do echo Hello World; done",
@@ -106,7 +107,7 @@ func TestCommandStdoutReaderErrorAbortsCommand(t *testing.T) {
 
 	var expectedError = errors.New("stdout reader error")
 	var cmd = popen.Command{
-		Command: "sh",
+		Command: "bash",
 		Arguments: []string{
 			"-c",
 			"echo Hello;sleep 10;echo Bye",
@@ -128,7 +129,7 @@ func TestCommandStdoutToFile(t *testing.T) {
 
 	var stdoutFile = filepath.Join(tmp, "stdout.txt")
 	var cmd = popen.Command{
-		Command: "sh",
+		Command: "bash",
 		Arguments: []string{
 			"-c",
 			"for i in {1..10}; do echo Hello World; done",
@@ -148,6 +149,8 @@ func TestCommandStdoutToFile(t *testing.T) {
 		}
 		return scanner.Err()
 	})
+	content, _ := ioutil.ReadFile(stdoutFile)
+	fmt.Println(string(content))
 	assert.That(linecnt, p.Eq(10))
 }
 
@@ -155,7 +158,7 @@ func TestCommandStdoutToInvalidPathFile(t *testing.T) {
 	assert := asserter.New(t)
 
 	var cmd = popen.Command{
-		Command: "sh",
+		Command: "bash",
 		Arguments: []string{
 			"-c",
 			"for i in {1..10}; do echo Hello World; done",
@@ -180,7 +183,7 @@ func TestCommandStderrReader(t *testing.T) {
 
 	var buf strings.Builder
 	var cmd = popen.Command{
-		Command: "sh",
+		Command: "bash",
 		Arguments: []string{
 			"-c",
 			"for i in {1..10}; do echo Hello World 1>&2; done",
@@ -201,7 +204,7 @@ func TestCommandStderrReaderErrorAbortsCommand(t *testing.T) {
 
 	var expectedError = errors.New("stderr reader error")
 	var cmd = popen.Command{
-		Command: "sh",
+		Command: "bash",
 		Arguments: []string{
 			"-c",
 			"echo Hello;sleep 10;echo Bye",
@@ -223,7 +226,7 @@ func TestCommandStderrToFile(t *testing.T) {
 
 	var stderrFile = filepath.Join(tmp, "stderr.txt")
 	var cmd = popen.Command{
-		Command: "sh",
+		Command: "bash",
 		Arguments: []string{
 			"-c",
 			"for i in {1..10}; do echo Hello World 1>&2; done",
@@ -250,7 +253,7 @@ func TestCommandStderrToInvalidPathFile(t *testing.T) {
 	assert := asserter.New(t)
 
 	var cmd = popen.Command{
-		Command: "sh",
+		Command: "bash",
 		Arguments: []string{
 			"-c",
 			"for i in {1..10}; do echo Hello World 1> &2; done",
