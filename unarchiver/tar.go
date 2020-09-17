@@ -12,6 +12,25 @@ type tarUnarchiver struct {
 	r *tar.Reader
 }
 
+func newTarUnarchiver(r io.Reader) *tarUnarchiver {
+	return &tarUnarchiver{
+		r: tar.NewReader(r),
+	}
+}
+
+func (u *tarUnarchiver) NextItem() (item ArchiveItem, err error) {
+	hdr, err := u.r.Next()
+	if err != nil {
+		return nil, err
+	}
+	return tarItem{
+		hdr:     hdr,
+		content: u.r,
+	}, nil
+}
+
+// ---------------------------------------------------------------------------
+
 type tarItem struct {
 	hdr     *tar.Header
 	content io.Reader
@@ -52,15 +71,4 @@ func (i tarItem) modeType() os.FileMode {
 	default:
 		return os.ModeIrregular
 	}
-}
-
-func (u *tarUnarchiver) NextItem() (item ArchiveItem, err error) {
-	hdr, err := u.r.Next()
-	if err != nil {
-		return nil, err
-	}
-	return tarItem{
-		hdr:     hdr,
-		content: u.r,
-	}, nil
 }

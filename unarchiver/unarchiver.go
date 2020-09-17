@@ -1,7 +1,6 @@
 package unarchiver
 
 import (
-	"archive/tar"
 	"bytes"
 	"compress/bzip2"
 	"compress/gzip"
@@ -33,7 +32,7 @@ type Unarchiver interface {
 
 var gzipHeader = []byte("\x1f\x8b")
 var bz2Header = []byte("BZh")
-var zipHeader = []byte("\x04\x03\x4b\x50")
+var zipHeader = []byte("\x50\x4b\x03\x04")
 
 // New creates and returns a new unarchiver capable of extracting the content of
 // the stream r. The format is determined automatically based on the first few
@@ -48,11 +47,12 @@ func New(r io.Reader) (u Unarchiver, err error) {
 		return nil, err
 	}
 	header = header[:n]
-	r = io.MultiReader(bytes.NewReader(header), r)
 
 	if bytes.HasPrefix(header, zipHeader) {
-		return nil, fmt.Errorf("unimplemented ZIP archive format")
+		return newZipUnarchiver(r)
 	}
+
+	r = io.MultiReader(bytes.NewReader(header), r)
 
 	if bytes.HasPrefix(header, gzipHeader) {
 		r, err = gzip.NewReader(r)
@@ -63,7 +63,5 @@ func New(r io.Reader) (u Unarchiver, err error) {
 		r = bzip2.NewReader(r)
 	}
 
-	return &tarUnarchiver{
-		r: tar.NewReader(r),
-	}, nil
+	return newTarUnarchiver(r), nil
 }
