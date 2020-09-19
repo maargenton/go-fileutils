@@ -101,19 +101,10 @@ func (c *Client) Get(ctx context.Context, r *Request) error {
 		return nil
 	}
 
-	var currentSize uint64
-	info, err := os.Stat(r.OutputFilename + downloadSuffix)
-	if err == nil && !info.IsDir() {
-		currentSize = uint64(info.Size())
-	}
-
-	//
-
+	// HEAD request to fetch target information and server capability
 	req, err := http.NewRequest("HEAD", r.URL, nil)
 	if err != nil {
 		return ErrInvalidURL.Wrap(err)
-		//  Errorf(
-		// 	"failed to create request for URL '%v', %w", r.URL, err)
 	}
 	if c.UserAgent != "" && req.Header.Get("User-Agent") == "" {
 		req.Header.Set("User-Agent", c.UserAgent)
@@ -126,55 +117,24 @@ func (c *Client) Get(ctx context.Context, r *Request) error {
 	}
 	head.Body.Close()
 
-	var totalSize = uint64(head.ContentLength)
-	var canResume = false
-	if head.Header.Get("Accept-Ranges") == "bytes" {
-		canResume = true
+	var state = &requestState{
+		r:   r,
+		ctx: ctx,
 	}
 
-	//
-
-	var contentRequest = *head.Request
-	contentRequest.Method = "GET"
-	if canResume && currentSize != 0 {
-		contentRequest.Header.Set("Range", fmt.Sprintf("bytes=%d-", currentSize))
-	}
-	resp, err := c.HTTPClient.Do(&contentRequest)
-	if err != nil {
-		return ErrInvalidURL.Wrap(err)
-	}
-	defer resp.Body.Close()
-
-	// Check resp.StatusCode
-
-	reader := &trackingReader{
-		ctx:   ctx,
-		count: currentSize,
-		r:     resp.Body,
+	info, err := os.Stat(r.OutputFilename + downloadSuffix)
+	if err == nil && !info.IsDir() {
+		state.currentSize = uint64(info.Size())
 	}
 
-	os.MkdirAll(filepath.Dir(r.OutputFilename), os.ModePerm)
-	flags := os.O_WRONLY | os.O_CREATE
-	if canResume {
-		flags |= os.O_APPEND
-	} else {
-		flags |= os.O_TRUNC
+	state.head = head
+	state.totalSize = uint64(head.ContentLength)
+	state.canResume = head.Header.Get("Accept-Ranges") == "bytes"
+
+	if err := c.downloadContent(state); err != nil {
+		return err
 	}
-	filename := r.OutputFilename + downloadSuffix
-	f, err := os.OpenFile(filename, flags, 0666)
-	if err != nil {
-		return fmt.Errorf("failed to open output file '%v', %w", filename, err)
-	}
-	defer f.Close()
 
-	_, err = io.Copy(f, reader)
-
-	// return
-	//
-
-	// _ = currentSize
-	_ = totalSize
-	// _ = canResume
 	return ErrInvalidChecksum
 }
 
@@ -209,4 +169,61 @@ func (c *Client) expandOutputPath(r *Request) error {
 		r.OutputFilename = filepath.Join(r.OutputDirectory, r.OutputFilename)
 	}
 	return nil
+}
+
+type requestState struct {
+	r           *Request
+	ctx         context.Context
+	head        *http.Response
+	currentSize uint64
+	totalSize   uint64
+	canResume   bool
+}
+
+func (c *Client) downloadContent(state *requestState) error {
+
+	var resume = state.currentSize != 0 && state.canResume
+
+	// GET request to fetch the actual content
+	var contentRequest = *state.head.Request
+	contentRequest.Method = "GET"
+
+	if resume {
+		contentRequest.Header.Set("Range", fmt.Sprintf("bytes=%d-", state.currentSize))
+	}
+	resp, err := c.HTTPClient.Do(&contentRequest)
+	if err != nil {
+		return ErrInvalidURL.Wrap(err)
+	}
+	defer resp.Body.Close()
+
+	if resp.StatusCode >= 300 {
+		return ErrInvalidURL.Errorf("unexpected http response: '%v'", resp.Status)
+	}
+	if resume && resp.StatusCode != http.StatusPartialContent {
+		resume = false
+	}
+
+	reader := &trackingReader{
+		ctx:   state.ctx,
+		count: state.currentSize,
+		r:     resp.Body,
+	}
+
+	filename := state.r.OutputFilename + downloadSuffix
+	os.MkdirAll(filepath.Dir(filename), os.ModePerm)
+	flags := os.O_WRONLY | os.O_CREATE | os.O_APPEND
+	if !resume {
+		flags |= os.O_TRUNC
+	}
+	f, err := os.OpenFile(filename, flags, 0666)
+	if err != nil {
+		return fmt.Errorf("failed to open output file '%v', %w", filename, err)
+	}
+	defer f.Close()
+
+	n, err := io.Copy(f, reader)
+	_ = n
+	return err
+
 }
