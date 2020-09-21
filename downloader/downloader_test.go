@@ -5,9 +5,10 @@ import (
 	"path/filepath"
 	"testing"
 
-	downloader "github.com/maargenton/fileutil/downloader2"
 	"github.com/maargenton/go-testpredicate/pkg/asserter"
 	"github.com/maargenton/go-testpredicate/pkg/p"
+
+	"github.com/maargenton/fileutil/downloader"
 )
 
 // ---------------------------------------------------------------------------

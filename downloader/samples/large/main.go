@@ -6,8 +6,9 @@ import (
 	"encoding/hex"
 	"fmt"
 	"math"
+	"time"
 
-	downloader "github.com/maargenton/fileutil/downloader2"
+	"github.com/maargenton/fileutil/downloader"
 )
 
 var testURL = "https://developer.arm.com/-/media/Files/downloads/gnu-rm/9-2019q4/gcc-arm-none-eabi-9-2019-q4-major-mac.tar.bz2?revision=c2c4fe0e-c0b6-4162-97e6-7707e12f2b6e&amp;la=en&amp;hash=EC9D4B5F5B050267B924F876B306D72CDF3BDDC0"
@@ -19,8 +20,10 @@ func run() error {
 		return fmt.Errorf("invalid checksum: %w", err)
 	}
 
+	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+	defer cancel()
 	client := downloader.DefaultClient
-	return client.Get(context.Background(), &downloader.Request{
+	return client.Get(ctx, &downloader.Request{
 		URL:             testURL,
 		OutputDirectory: "testdata/output",
 		Hash:            sha256.New(),

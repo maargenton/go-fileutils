@@ -7,7 +7,7 @@ import (
 	"fmt"
 	"math"
 
-	downloader "github.com/maargenton/fileutil/downloader2"
+	"github.com/maargenton/fileutil/downloader"
 )
 
 var testURL = "https://github.com/jung-kurt/gofpdf/archive/v2.17.2.tar.gz"

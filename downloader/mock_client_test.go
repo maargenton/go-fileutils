@@ -7,7 +7,7 @@ import (
 	"os"
 	"strings"
 
-	downloader "github.com/maargenton/fileutil/downloader2"
+	"github.com/maargenton/fileutil/downloader"
 	"github.com/maargenton/go-errors"
 )
 
