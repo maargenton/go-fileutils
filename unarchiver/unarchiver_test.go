@@ -121,5 +121,5 @@ func TestZipUnarchiver(t *testing.T) {
 	})
 
 	assert.That(err, p.IsNoError())
-	t.Fail()
+	// t.Fail()
 }
