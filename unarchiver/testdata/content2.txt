@@ -1,6 +1,5 @@
 drwxr-xr-x        0 foo/
 drwxr-xr-x        0 foo/bar/
--rwxr-xr-x      651 foo/bar/create-content.sh
 -rw-r--r--        8 foo/bar/foobar1.txt
 Lrwxr-xr-x        0 foo/bar/foobar2.txt -> foobar1.txt
 ?rw-r--r--        0 foo/bar/foobar3.txt -> foo/bar/foobar1.txt

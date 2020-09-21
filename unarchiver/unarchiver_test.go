@@ -55,7 +55,7 @@ func loadGolden(filename string) string {
 	return s.String()
 }
 
-func Test(t *testing.T) {
+func TestTarUnarchiver(t *testing.T) {
 	var tcs = []struct {
 		archive string
 		content string
@@ -95,4 +95,31 @@ func Test(t *testing.T) {
 			}
 		})
 	}
+}
+
+func TestZipUnarchiver(t *testing.T) {
+	assert := asserter.New(t)
+	assert.That(nil, p.IsNil())
+
+	var err = fileutil.ReadFile("testdata/content.zip", func(r io.Reader) error {
+		u, err := unarchiver.New(r)
+		if err != nil {
+			return err
+		}
+
+		for {
+			item, err := u.NextItem()
+			if errors.Is(err, io.EOF) {
+				break
+			}
+			if err != nil {
+				return err
+			}
+			printItem(os.Stdout, item)
+		}
+		return nil
+	})
+
+	assert.That(err, p.IsNoError())
+	// t.Fail()
 }
