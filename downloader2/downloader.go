@@ -19,6 +19,7 @@
 package downloader
 
 import (
+	"bytes"
 	"context"
 	"fmt"
 	"hash"
@@ -28,6 +29,7 @@ import (
 	"os"
 	"path"
 	"path/filepath"
+	"sync"
 
 	"github.com/maargenton/fileutil"
 	"github.com/maargenton/go-errors"
@@ -54,9 +56,8 @@ type Request struct {
 	Hash            hash.Hash
 	Checksum        []byte
 
-	StatusUpdateHandler func(status int)
-	ProgressHandler     func(progress float64)
-	ContentReader       func(r io.Reader) error
+	ProgressHandler func(progress float64)
+	ContentReader   func(r io.Reader) error
 }
 
 // ErrInvalidURL is returned by Client.Get() when the target URL specified in
@@ -80,29 +81,45 @@ const downloadSuffix = ".download"
 // that were left unspecified, and to ensure that all paths refer to absolute
 // locations.
 func (c *Client) Get(ctx context.Context, r *Request) error {
+
+	// Determine output filename based on request arguments and URL
 	parsedURL, err := url.Parse(r.URL)
 	if err != nil {
 		return ErrInvalidURL.Errorf(
-			"failed to parse request URL '%v', %w", r.URL, err)
+			"failed to parse request URL, %w", err)
 	}
-
 	if r.OutputFilename == "" {
 		r.OutputFilename = path.Base(parsedURL.Path)
 	}
 	err = c.expandOutputPath(r)
 
+	// Handle case where the final file is already there and no download is
+	// necessary
 	if fileutil.IsFile(r.OutputFilename) {
 		if r.ContentReader != nil {
 			// TODO: stream content to ContentReader, update progress along the
 			// way
 		} else if r.ProgressHandler != nil {
-			r.ProgressHandler(1.0)
+			r.ProgressHandler(-1.0)
 		}
 		return nil
 	}
 
+	// Setup background task to prime the hash function with the partial local
+	// content while sending the initial HEAD request.
+	var filename = r.OutputFilename + downloadSuffix
+	var hashPrimeWG sync.WaitGroup
+	var hashPrimeError error
+	if fileutil.Exists(filename) && len(r.Checksum) != 0 && r.Hash != nil {
+		hashPrimeWG.Add(1)
+		go func() {
+			defer hashPrimeWG.Done()
+			hashPrimeError = hashFileContent(filename, r.Hash)
+		}()
+	}
+
 	// HEAD request to fetch target information and server capability
-	req, err := http.NewRequest("HEAD", r.URL, nil)
+	req, err := http.NewRequestWithContext(ctx, "HEAD", r.URL, nil)
 	if err != nil {
 		return ErrInvalidURL.Wrap(err)
 	}
@@ -116,26 +133,69 @@ func (c *Client) Get(ctx context.Context, r *Request) error {
 		return ErrInvalidURL.Wrap(err)
 	}
 	head.Body.Close()
+	hashPrimeWG.Wait()
 
-	var state = &requestState{
-		r:   r,
-		ctx: ctx,
+	if head.StatusCode >= 400 {
+		return ErrInvalidURL.Errorf("unexpected http response: '%v'", head.Status)
+	}
+	if hashPrimeError != nil {
+		return ErrLocalFileError.Wrap(hashPrimeError)
 	}
 
-	info, err := os.Stat(r.OutputFilename + downloadSuffix)
-	if err == nil && !info.IsDir() {
-		state.currentSize = uint64(info.Size())
+	var downloader = &downloader{
+		client:      c.HTTPClient,
+		head:        head,
+		destination: filename,
+		hash:        r.Hash,
 	}
 
-	state.head = head
-	state.totalSize = uint64(head.ContentLength)
-	state.canResume = head.Header.Get("Accept-Ranges") == "bytes"
-
-	if err := c.downloadContent(state); err != nil {
+	if r.ProgressHandler != nil && r.ContentReader == nil {
+		downloader.progress = r.ProgressHandler
+	}
+	os.MkdirAll(filepath.Dir(filename), os.ModePerm)
+	if err := downloader.resume(); err != nil {
 		return err
 	}
+	if downloader.targetSize != 0 && downloader.currentSize != downloader.targetSize {
+		return io.ErrUnexpectedEOF
+	}
 
-	return ErrInvalidChecksum
+	// Finalize download
+	if r.Hash != nil && len(r.Checksum) > 0 {
+		// Verify checksum
+		if !bytes.Equal(r.Checksum, r.Hash.Sum(nil)) {
+			if downloader.targetSize != 0 {
+				if err := os.Remove(filename); err != nil {
+					return ErrInvalidChecksum.Errorf("failed to remove target file, %w", err)
+				}
+			}
+			return ErrInvalidChecksum.Errorf("content checksum mismatch")
+		}
+	}
+
+	if err := os.Rename(filename, r.OutputFilename); err != nil {
+		return ErrLocalFileError.Errorf(
+			"failed to move downloaded content to its final location, %w", err)
+	}
+
+	if downloader.progress != nil {
+		downloader.progress(-1)
+	}
+
+	return nil
+}
+
+func hashFileContent(filename string, h hash.Hash) error {
+	f, err := os.Open(filename)
+	if err != nil {
+		return fmt.Errorf("failed to open file for checksum, %w", err)
+	}
+	defer f.Close()
+	_, err = io.Copy(h, f)
+	if err != nil {
+		return fmt.Errorf("failed to read content for checksum, %w", err)
+	}
+	return nil
 }
 
 func (c *Client) expandOutputPath(r *Request) error {
@@ -171,59 +231,107 @@ func (c *Client) expandOutputPath(r *Request) error {
 	return nil
 }
 
-type requestState struct {
-	r           *Request
-	ctx         context.Context
+// ---------------------------------------------------------------------------
+
+// downloader captures the result of the initial HEAD request to the target URL
+// and performs the actual download to the destination file while updating the
+// progress tracker. The downloader never sets the error on the tracker and
+// instead returns it from the resume function.
+type downloader struct {
+	client      *http.Client
 	head        *http.Response
+	destination string
 	currentSize uint64
-	totalSize   uint64
-	canResume   bool
+	targetSize  uint64
+	hash        hash.Hash
+	progress    func(float64)
 }
 
-func (c *Client) downloadContent(state *requestState) error {
+// func (d *downloader) canResume() bool {
+// 	return d.head.Header.Get("Accept-Ranges") == "bytes"
+// }
 
-	var resume = state.currentSize != 0 && state.canResume
+func (d *downloader) resume() error {
 
-	// GET request to fetch the actual content
-	var contentRequest = *state.head.Request
-	contentRequest.Method = "GET"
-
-	if resume {
-		contentRequest.Header.Set("Range", fmt.Sprintf("bytes=%d-", state.currentSize))
+	// Check current size of the destination file
+	info, err := os.Stat(d.destination)
+	if err != nil && !os.IsNotExist(err) {
+		return err
 	}
-	resp, err := c.HTTPClient.Do(&contentRequest)
+	if info != nil {
+		d.currentSize = uint64(info.Size())
+	}
+
+	if d.head.ContentLength > 0 {
+		d.targetSize = uint64(d.head.ContentLength)
+	}
+	if d.currentSize != 0 && d.currentSize == d.targetSize {
+		if d.progress != nil {
+			d.progress(1)
+		}
+		return nil
+	}
+
+	// Send http request to fetch content, resuming if supported
+	var canResume = d.head.Header.Get("Accept-Ranges") == "bytes"
+	var resume = canResume && d.currentSize > 0
+	var request = *d.head.Request
+	request.Method = "GET"
+	if resume {
+		request.Header.Set("Range", fmt.Sprintf("bytes=%d-", d.currentSize))
+	}
+	resp, err := d.client.Do(&request)
 	if err != nil {
-		return ErrInvalidURL.Wrap(err)
+		return err
 	}
 	defer resp.Body.Close()
 
-	if resp.StatusCode >= 300 {
+	if resp.StatusCode >= 400 {
 		return ErrInvalidURL.Errorf("unexpected http response: '%v'", resp.Status)
 	}
 	if resume && resp.StatusCode != http.StatusPartialContent {
 		resume = false
 	}
 
-	reader := &trackingReader{
-		ctx:   state.ctx,
-		count: state.currentSize,
-		r:     resp.Body,
+	// Last chance to set targetSize based on response headers
+	if d.targetSize == 0 {
+		if resume {
+			_, _, _, l := decodeContentRange(resp.Header.Get("Content-Range"))
+			if l > 0 {
+				d.targetSize = uint64(l)
+			}
+		} else {
+			if resp.ContentLength > 0 {
+				d.targetSize = uint64(resp.ContentLength)
+			}
+		}
 	}
 
-	filename := state.r.OutputFilename + downloadSuffix
-	os.MkdirAll(filepath.Dir(filename), os.ModePerm)
+	// Open destination file for writing, truncating it if resume failed
 	flags := os.O_WRONLY | os.O_CREATE | os.O_APPEND
 	if !resume {
 		flags |= os.O_TRUNC
 	}
-	f, err := os.OpenFile(filename, flags, 0666)
+	f, err := os.OpenFile(d.destination, flags, 0666)
 	if err != nil {
-		return fmt.Errorf("failed to open output file '%v', %w", filename, err)
+		return err
 	}
 	defer f.Close()
 
-	n, err := io.Copy(f, reader)
-	_ = n
-	return err
+	var w = fileutil.WriterFunc(func(p []byte) (n int, err error) {
+		n, err = f.Write(p)
+		d.currentSize += uint64(n)
 
+		if d.hash != nil {
+			d.hash.Write(p)
+		}
+		if d.progress != nil {
+			d.progress(float64(d.currentSize) / float64(d.targetSize))
+		}
+
+		return
+	})
+	_, err = io.Copy(w, resp.Body)
+
+	return err
 }

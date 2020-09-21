@@ -2,8 +2,7 @@ package downloader_test
 
 import (
 	"context"
-	"crypto/sha256"
-	"io"
+	"path/filepath"
 	"testing"
 
 	downloader "github.com/maargenton/fileutil/downloader2"
@@ -11,40 +10,99 @@ import (
 	"github.com/maargenton/go-testpredicate/pkg/p"
 )
 
-var testURL1 = "https://developer.arm.com/-/media/Files/downloads/gnu-rm/9-2019q4/gcc-arm-none-eabi-9-2019-q4-major-mac.tar.bz2?revision=c2c4fe0e-c0b6-4162-97e6-7707e12f2b6e&amp;la=en&amp;hash=EC9D4B5F5B050267B924F876B306D72CDF3BDDC0"
-var testURL2 = "https://github.com/jung-kurt/gofpdf/archive/v2.17.2.tar.gz"
+// ---------------------------------------------------------------------------
+// Test Request.OutputFilename determination / expansion
 
-func Test(t *testing.T) {
+func TestGetWithInvalidUrl(t *testing.T) {
 	assert := asserter.New(t)
-	assert.That(nil, p.IsNil())
 
-	outputPath := ""
-	client := downloader.DefaultClient
+	var client = transportErrorClient()
 	err := client.Get(context.Background(), &downloader.Request{
-		URL:             testURL2,
-		OutputDirectory: "testdata/output",
-		Hash:            sha256.New(),
-		Checksum:        []byte{1, 2, 3},
-
-		ContentReader: func(r io.Reader) error {
-			return extractArchiveContent(r, outputPath)
-		},
+		URL: ":http://localhost:8080/aaa/bbb.tar.gz",
 	})
 
-	assert.That(err, p.IsNoError())
+	assert.That(err, p.IsError(downloader.ErrInvalidURL))
 }
 
-func extractArchiveContent(r io.Reader, path string) error {
-	return nil
+func TestGetWithBareFilename(t *testing.T) {
+	assert := asserter.New(t)
+
+	var client = transportErrorClient()
+	var request = &downloader.Request{
+		URL:             "http://localhost:8080/aaa/bbb.tar.gz",
+		OutputFilename:  "bbb.tar.gz",
+		OutputDirectory: "__output__",
+	}
+	err := client.Get(context.Background(), request)
+
+	assert.That(err, p.IsError(mockError))
+	assert.That(request.OutputFilename, p.Contains("__output__"))
 }
 
-// func TestFilepathBase(t *testing.T) {
-// 	assert := asserter.New(t)
-// 	assert.That(nil, p.IsNil())
+func TestGetWithPathSpecifiedFilename(t *testing.T) {
+	assert := asserter.New(t)
 
-// 	filename := "./aaa/bbb/archive.tar.bz2"
+	var client = transportErrorClient()
+	client.OutputDirectory = "/tmp/__client__/__output__"
 
-// 	assert.That(filepath.Base(filename), p.Eq(filename))
-// 	assert.That(filepath.Dir(filename), p.Eq(""))
+	var request = &downloader.Request{
+		URL:             "http://localhost:8080/aaa/bbb.tar.gz",
+		OutputFilename:  "__path__/bbb.tar.gz",
+		OutputDirectory: "__output__",
+	}
+	err := client.Get(context.Background(), request)
 
-// }
+	assert.That(err, p.IsError(mockError))
+	assert.That(request.OutputFilename, p.Contains("__path__"))
+
+	var expectedPath = filepath.Join(pwd, "__path__/bbb.tar.gz")
+	assert.That(request.OutputFilename, p.Eq(expectedPath))
+}
+
+func TestGetUsingClientOutputDirectoryAndURLFilename(t *testing.T) {
+	assert := asserter.New(t)
+
+	var client = transportErrorClient()
+	client.OutputDirectory = "/tmp/__client__/__output__"
+
+	var request = &downloader.Request{
+		URL: "http://localhost:8080/aaa/bbb.tar.gz",
+	}
+	err := client.Get(context.Background(), request)
+
+	assert.That(err, p.IsError(mockError))
+	assert.That(request.OutputFilename, p.Eq("/tmp/__client__/__output__/bbb.tar.gz"))
+}
+
+func TestGetUsingRequestOutputDirectoryAndURLFilename(t *testing.T) {
+	assert := asserter.New(t)
+
+	var client = transportErrorClient()
+	client.OutputDirectory = "/tmp/__client__/__output__"
+
+	var request = &downloader.Request{
+		URL:             "http://localhost:8080/aaa/bbb.tar.gz",
+		OutputDirectory: "/tmp/__request__/__output__",
+	}
+	err := client.Get(context.Background(), request)
+
+	assert.That(err, p.IsError(mockError))
+	assert.That(request.OutputFilename, p.Eq("/tmp/__request__/__output__/bbb.tar.gz"))
+}
+
+func TestGetWithNoOutputDirectoryUsesWorkingDirectory(t *testing.T) {
+	assert := asserter.New(t)
+
+	var client = transportErrorClient()
+	var request = &downloader.Request{
+		URL: "http://localhost:8080/aaa/bbb.tar.gz",
+	}
+	err := client.Get(context.Background(), request)
+
+	assert.That(err, p.IsError(mockError))
+	var expected = filepath.Join(pwd, "bbb.tar.gz")
+	assert.That(request.OutputFilename, p.Eq(expected))
+}
+
+// ---------------------------------------------------------------------------
+// Test Request.OutputFilename determination / expansion
