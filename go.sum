@@ -1,6 +1,3 @@
-github.com/cavaliercoder/grab v1.0.0 h1:H6VQ1NiLO7AvXM6ZyaInnoZrRLeo2FoUTQEcXln4bvQ=
-github.com/cavaliercoder/grab v2.0.0+incompatible h1:wZHbBQx56+Yxjx2TCGDcenhh3cJn7cCLMfkEPmySTSE=
-github.com/cavaliercoder/grab v2.0.0+incompatible/go.mod h1:tTBkfNqSBfuMmMBFaO2phgyhdYhiZQ/+iXCZDzcDsMI=
 github.com/maargenton/go-errors v0.0.0-20200720205202-f0b27f4dc001 h1:CJl2t7ctpW6mmkPjTinkMaZO/z2wccC3HeTufaFAlYk=
 github.com/maargenton/go-errors v0.0.0-20200720205202-f0b27f4dc001/go.mod h1:qw42L2So9gQZM8ZrnBoBc4deYTaL89dyE+2wuNGELMg=
 github.com/maargenton/go-testpredicate v0.4.4 h1:ylbH2Ht4FNOAeFeE9c+PtbUVyrI4QlqxB1DkjZqrscA=
