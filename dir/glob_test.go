@@ -155,6 +155,23 @@ func TestGlob(t *testing.T) {
 	}
 }
 
+func TestGlobStarFromCurrentDirectory(t *testing.T) {
+	assert := asserter.New(t, asserter.AbortOnError())
+	basepath, cleanup, err := setupTestFolder()
+	assert.That(err, p.IsNoError())
+	defer cleanup()
+
+	pwd, _ := os.Getwd()
+	os.Chdir(basepath)
+	defer func() {
+		os.Chdir(pwd)
+	}()
+
+	matches, err := dir.Glob("*")
+	assert.That(err, p.IsNoError())
+	assert.That(matches, p.IsEqualSet([]string{".", "src"}))
+}
+
 // dir.Glob()
 // ---------------------------------------------------------------------------
 
