@@ -29,11 +29,7 @@ var ErrSkipDir = filepath.SkipDir
 // also traverses symlinks safely and detects potential recursions.
 func Walk(root string, walkFn WalkFunc) error {
 	visited := make([]string, 0, 16)
-	walkRoot := root
-	if walkRoot == "" {
-		walkRoot = "."
-	}
-	return filepath.Walk(walkRoot, MakeSymlinkWalkFunc(visited, root, root, walkFn))
+	return filepath.Walk(root, MakeSymlinkWalkFunc(visited, root, root, walkFn))
 }
 
 // MakeSymlinkWalkFunc returns a wrapped `WalkFunc` that handles symlink
@@ -41,7 +37,12 @@ func Walk(root string, walkFn WalkFunc) error {
 func MakeSymlinkWalkFunc(visited []string, basepath, realpath string, clientFn WalkFunc) WalkFunc {
 	var l = len(realpath)
 	return func(path string, info os.FileInfo, err error) error {
-		walkpath := filepath.Join(basepath, path[l:])
+		rpath := path
+		if strings.HasPrefix(rpath, realpath) {
+			rpath = rpath[l:]
+		}
+
+		walkpath := filepath.Join(basepath, rpath)
 		if err != nil {
 			return clientFn(walkpath, info, err)
 		}

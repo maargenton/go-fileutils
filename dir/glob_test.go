@@ -169,7 +169,15 @@ func TestGlobStarFromCurrentDirectory(t *testing.T) {
 
 	matches, err := dir.Glob("*")
 	assert.That(err, p.IsNoError())
-	assert.That(matches, p.IsEqualSet([]string{".", "src"}))
+	assert.That(matches, p.IsEqualSet([]string{"src/"}))
+}
+
+func TestGlobFromSystemRoot(t *testing.T) {
+	assert := asserter.New(t, asserter.AbortOnError())
+
+	matches, err := dir.Glob("/d*")
+	assert.That(err, p.IsNoError())
+	assert.That(matches, p.Contains([]string{"/dev/"}))
 }
 
 // dir.Glob()

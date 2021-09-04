@@ -117,12 +117,15 @@ func TestWalkReportsErrorOnInvalidSymlinks(t *testing.T) {
 	// 	fmt.Printf("%v - %v - %v\n", r.path, decodeMode(r.mode), r.err)
 	// }
 
-	src_src3 := records["src/src3"] // Symlink - lstat testdata-625528602_src2: no such file or directory
+	// Symlink - lstat testdata-625528602_src2: no such file or directory
+	src_src3 := records["src/src3"]
 	assert.That(os.IsNotExist(src_src3.err), p.IsTrue(), "error", src_src3.err)
 
-	dst_src3 := records["dst/src3"] // Symlink - lstat testdata-625528602_src2: no such file or directory
+	// Symlink - lstat testdata-625528602_src2: no such file or directory
+	dst_src3 := records["dst/src3"]
 	assert.That(os.IsNotExist(dst_src3.err), p.IsTrue(), "error", dst_src3.err)
 
-	src_src_src3 := records["src/src/src3"] // Symlink - lstat testdata-625528602/src2: no such file or directory
+	// Symlink - lstat testdata-625528602/src2: no such file or directory
+	src_src_src3 := records["src/src/src3"]
 	assert.That(os.IsNotExist(src_src_src3.err), p.IsTrue(), "error", src_src_src3.err)
 }

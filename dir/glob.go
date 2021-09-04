@@ -203,17 +203,24 @@ func (m *GlobMatcher) GlobFrom(basepath string) (matches []string, err error) {
 // walkFn function for every match. The pattern must be specified according to
 // the extended glob pattern described in the package level documentation.
 func (m *GlobMatcher) Scan(walkFn WalkFunc) error {
-	return Walk(m.prefix,
-		func(path string, info os.FileInfo, err error) error {
-			if info != nil && info.IsDir() && !m.PrefixMatch(path) {
-				return filepath.SkipDir
+	fn := func(path string, info os.FileInfo, err error) error {
+		if info != nil && info.IsDir() && !m.PrefixMatch(path) {
+			return filepath.SkipDir
+		}
+		if m.Match(path) {
+			if info.IsDir() {
+				path += string(filepath.Separator)
+				err = filepath.SkipDir
 			}
-			if m.Match(path) {
-				return walkFn(path, info, err)
-			}
-			return err
-		},
-	)
+			return walkFn(path, info, err)
+		}
+		return nil // Ignore any error if no match
+	}
+
+	if m.prefix == "" {
+		return m.ScanFrom(".", fn)
+	}
+	return Walk(m.prefix, fn)
 }
 
 // ScanFrom scans the file tree for filenames matching the pattern and call the
