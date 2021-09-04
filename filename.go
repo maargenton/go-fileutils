@@ -38,6 +38,22 @@ func RewriteFilename(input string, opts *RewriteOpts) string {
 	return filepath.Join(dirname, basename+extname)
 }
 
+// CleanPath is equivalent to filepath.Clean, but preserve trailing path
+// separator indicating a folder.
+func CleanPath(input string) string {
+	output := filepath.Clean(input)
+	if hasTrailingSeparator(input) && !hasTrailingSeparator(output) {
+		output += string(filepath.Separator)
+	}
+
+	return output
+}
+
+func hasTrailingSeparator(path string) bool {
+	l := len(path)
+	return l > 0 && path[l-1] == filepath.Separator
+}
+
 // ExpandPath is similar to ExpandPathRelative with an empty `basepath`;
 // relative paths are expanded relative to `$(pwd)`.
 func ExpandPath(input string) (output string, err error) {
