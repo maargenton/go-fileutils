@@ -8,13 +8,16 @@ import (
 )
 
 // ---------------------------------------------------------------------------
-// Local wrappers of filepath package function, preserving trailing slash
+// Local wrappers of filepath package function, preserving trailing path
+// separator, commonly used to indicate a directory.
 
-// Clean is equivalent to filepath.Clean, but preserve trailing path
-// separator, commonly used to indicate a folder.
+// Clean is equivalent to `filepath.Clean()`, but preserves any trailing path
+// separator or appends one for '.' or '..' path fragments.
 func Clean(input string) string {
-	dir := input == "" || input == "." ||
-		strings.HasSuffix(input, "..") || hasTrailingSeparator(input)
+	dir := input == "" || input == "." || input == ".." ||
+		strings.HasSuffix(input, string(filepath.Separator)+"..") ||
+		strings.HasSuffix(input, string(filepath.Separator)+".") ||
+		hasTrailingSeparator(input)
 
 	output := filepath.Clean(input)
 	if dir && !hasTrailingSeparator(output) {
@@ -23,8 +26,8 @@ func Clean(input string) string {
 	return output
 }
 
-// Rel is equivalent to filepath.Clean, but preserve trailing path
-// separator, commonly used to indicate a folder.
+// Rel is equivalent to `filepath.Rel()`, but preserves any trailing path
+// separator.
 func Rel(basepath, targetpath string) (string, error) {
 	output, err := filepath.Rel(basepath, targetpath)
 	if err == nil && hasTrailingSeparator(targetpath) && !hasTrailingSeparator(output) {
@@ -33,14 +36,24 @@ func Rel(basepath, targetpath string) (string, error) {
 	return output, err
 }
 
-// Join is equivalent to filepath.Join, but preserve a trailing path
-// separator on the last element, commonly used to indicate a folder.
+// Join provides functionality similar to `filepath.Join()`, but with
+// significant differences that make it more convenient to use in common cases.
+// It takes any number of path elements and joins them with the path separator
+// in between. If any element is an absolute path, all preceding elements are
+// discarded and the resulting path is absolute. It also preserves any trailing
+// path separator on the last element.
 func Join(elem ...string) string {
-	output := filepath.Join(elem...)
-	if len(elem) > 0 && hasTrailingSeparator(elem[len(elem)-1]) && !hasTrailingSeparator(output) {
-		output += string(filepath.Separator)
+	var output strings.Builder
+	for _, e := range elem {
+		if filepath.IsAbs(e) {
+			output.Reset()
+		}
+		if output.Len() > 0 {
+			output.WriteRune(filepath.Separator)
+		}
+		output.WriteString(Clean(e))
 	}
-	return output
+	return Clean(output.String())
 }
 
 func hasTrailingSeparator(path string) bool {

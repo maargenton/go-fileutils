@@ -24,6 +24,8 @@ func TestClean(t *testing.T) {
 		{"./abc//def", "abc/def"},
 		{"aaa/..", "./"},
 		{"aaa/../", "./"},
+		{"aaa/.", "aaa/"},
+		{"aaa/./", "aaa/"},
 		{".", "./"},
 		{"./", "./"},
 		{"", "./"},
@@ -84,6 +86,11 @@ func TestJoin(t *testing.T) {
 		{[]string{"aaa/bbb", "ccc"}, "aaa/bbb/ccc"},
 		{[]string{"aaa/bbb/", "ccc"}, "aaa/bbb/ccc"},
 		{[]string{"aaa/bbb/", "ccc/"}, "aaa/bbb/ccc/"},
+		{[]string{"", ""}, "./"},
+		{[]string{"aaa/bbb", ""}, "aaa/bbb/"},
+		{[]string{"aaa/bbb", "../ccc", "../ddd"}, "aaa/ddd"},
+		{[]string{"/dev", "tty.usbserial-1240"}, "/dev/tty.usbserial-1240"},
+		{[]string{".", "/dev", "tty.usbserial-1240"}, "/dev/tty.usbserial-1240"},
 	}
 
 	for _, tc := range tcs {
