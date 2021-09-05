@@ -11,6 +11,97 @@ import (
 )
 
 // ---------------------------------------------------------------------------
+// fileutil.Clean
+
+func TestClean(t *testing.T) {
+	var tcs = []struct {
+		input, output string
+	}{
+		{"/", "/"},
+		{"//", "/"},
+		{"/dev/", "/dev/"},
+		{"./abc/", "abc/"},
+		{"./abc//def", "abc/def"},
+		{"aaa/..", "./"},
+		{"aaa/../", "./"},
+		{".", "./"},
+		{"./", "./"},
+		{"", "./"},
+	}
+
+	for _, tc := range tcs {
+		t.Run(fmt.Sprintf("Given %v", tc.input), func(t *testing.T) {
+			t.Run("when calling Clean", func(t *testing.T) {
+				output := fileutil.Clean(tc.input)
+				t.Run("then output match expected", func(t *testing.T) {
+					require.That(t, output).Eq(tc.output)
+				})
+			})
+		})
+	}
+}
+
+// fileutil.Clean
+// ---------------------------------------------------------------------------
+
+// ---------------------------------------------------------------------------
+// fileutil.Rel
+func TestRel(t *testing.T) {
+	var tcs = []struct {
+		basepath, targetpath, output string
+	}{
+		{"testdata", "testdata/src", "src"},
+		{"testdata/", "testdata/src", "src"},
+		{"testdata/", "testdata/src/", "src/"},
+		{"/", "/testdata/src/", "testdata/src/"},
+		{"/testdata", "/testdata/src/", "src/"},
+	}
+
+	for _, tc := range tcs {
+		t.Run(fmt.Sprintf("Given %v + %v", tc.basepath, tc.targetpath), func(t *testing.T) {
+			t.Run("when calling Clean", func(t *testing.T) {
+				output, err := fileutil.Rel(tc.basepath, tc.targetpath)
+				require.That(t, err).IsNil()
+				t.Run("then output match expected", func(t *testing.T) {
+					require.That(t, output).Eq(tc.output)
+				})
+			})
+		})
+	}
+}
+
+// fileutil.Rel
+// ---------------------------------------------------------------------------
+
+// ---------------------------------------------------------------------------
+// fileutil.Join
+
+func TestJoin(t *testing.T) {
+	var tcs = []struct {
+		input  []string
+		output string
+	}{
+		{[]string{"aaa/bbb", "ccc"}, "aaa/bbb/ccc"},
+		{[]string{"aaa/bbb/", "ccc"}, "aaa/bbb/ccc"},
+		{[]string{"aaa/bbb/", "ccc/"}, "aaa/bbb/ccc/"},
+	}
+
+	for _, tc := range tcs {
+		t.Run(fmt.Sprintf("Given %v", tc.input), func(t *testing.T) {
+			t.Run("when calling Join", func(t *testing.T) {
+				output := fileutil.Join(tc.input...)
+				t.Run("then output match expected", func(t *testing.T) {
+					require.That(t, output).Eq(tc.output)
+				})
+			})
+		})
+	}
+}
+
+// fileutil.Join
+// ---------------------------------------------------------------------------
+
+// ---------------------------------------------------------------------------
 // RewriteFilename
 
 func TestRewriteFilenameFull(t *testing.T) {
@@ -36,38 +127,6 @@ func TestRewriteFilenameNoDotExt(t *testing.T) {
 }
 
 // RewriteFilename
-// ---------------------------------------------------------------------------
-
-// ---------------------------------------------------------------------------
-// CleanPath
-
-func Test(t *testing.T) {
-	var tcs = []struct {
-		input, output string
-	}{
-		{"/", "/"},
-		{"//", "/"},
-		{"/dev/", "/dev/"},
-		{"./abc/", "abc/"},
-		{"./abc//def", "abc/def"},
-		{"aaa/..", "."},
-		{"aaa/../", "./"},
-	}
-
-	for _, tc := range tcs {
-		t.Run(fmt.Sprintf("Given %v", tc.input), func(t *testing.T) {
-			t.Run("when calling CleanPath", func(t *testing.T) {
-				output := fileutil.CleanPath(tc.input)
-				t.Run("then ", func(t *testing.T) {
-					require.That(t, output).Eq(tc.output)
-
-				})
-			})
-		})
-	}
-}
-
-// CleanPath
 // ---------------------------------------------------------------------------
 
 // ---------------------------------------------------------------------------

@@ -7,6 +7,49 @@ import (
 	"strings"
 )
 
+// ---------------------------------------------------------------------------
+// Local wrappers of filepath package function, preserving trailing slash
+
+// Clean is equivalent to filepath.Clean, but preserve trailing path
+// separator, commonly used to indicate a folder.
+func Clean(input string) string {
+	dir := input == "" || input == "." ||
+		strings.HasSuffix(input, "..") || hasTrailingSeparator(input)
+
+	output := filepath.Clean(input)
+	if dir && !hasTrailingSeparator(output) {
+		output += string(filepath.Separator)
+	}
+	return output
+}
+
+// Rel is equivalent to filepath.Clean, but preserve trailing path
+// separator, commonly used to indicate a folder.
+func Rel(basepath, targetpath string) (string, error) {
+	output, err := filepath.Rel(basepath, targetpath)
+	if err == nil && hasTrailingSeparator(targetpath) && !hasTrailingSeparator(output) {
+		output += string(filepath.Separator)
+	}
+	return output, err
+}
+
+// Join is equivalent to filepath.Join, but preserve a trailing path
+// separator on the last element, commonly used to indicate a folder.
+func Join(elem ...string) string {
+	output := filepath.Join(elem...)
+	if len(elem) > 0 && hasTrailingSeparator(elem[len(elem)-1]) && !hasTrailingSeparator(output) {
+		output += string(filepath.Separator)
+	}
+	return output
+}
+
+func hasTrailingSeparator(path string) bool {
+	l := len(path)
+	return l > 0 && path[l-1] == filepath.Separator
+}
+
+// ---------------------------------------------------------------------------
+
 // RewriteOpts contains the options to apply to RewriteFilename to transform the
 // input filename
 type RewriteOpts struct {
@@ -36,22 +79,6 @@ func RewriteFilename(input string, opts *RewriteOpts) string {
 		dirname = opts.Dirname
 	}
 	return filepath.Join(dirname, basename+extname)
-}
-
-// CleanPath is equivalent to filepath.Clean, but preserve trailing path
-// separator indicating a folder.
-func CleanPath(input string) string {
-	output := filepath.Clean(input)
-	if hasTrailingSeparator(input) && !hasTrailingSeparator(output) {
-		output += string(filepath.Separator)
-	}
-
-	return output
-}
-
-func hasTrailingSeparator(path string) bool {
-	l := len(path)
-	return l > 0 && path[l-1] == filepath.Separator
 }
 
 // ExpandPath is similar to ExpandPathRelative with an empty `basepath`;
