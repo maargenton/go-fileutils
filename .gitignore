@@ -1,4 +1,4 @@
 .vscode
 testdata-*
 **/testdata/output
-unarchiver/testdata/content
+**/unarchiver/testdata/content
