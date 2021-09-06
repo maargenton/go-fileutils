@@ -171,12 +171,10 @@ func TestGlobFragmentToRegexp(t *testing.T) {
 			require.That(t, err).IsNil()
 			require.That(t, re).IsNotNil()
 			require.That(t, re.String()).Eq(tc.re)
-			require.That(t, re.MatchString(tc.match)).IsTrue()
-
-			// require.That(t, re.MatchString(tc.match),
-			// 	predicate.ContextValue{Name: "re", Value: re.String()},
-			// 	predicate.ContextValue{Name: "match", Value: tc.match},
-			// ).IsTrue()
+			require.That(t, re.MatchString(tc.match),
+				require.Context{Name: "re", Value: re.String()},
+				require.Context{Name: "match", Value: tc.match},
+			).IsTrue()
 		})
 	}
 }

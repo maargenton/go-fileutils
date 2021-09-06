@@ -4,6 +4,8 @@ github.com/maargenton/go-errors v0.0.0-20200720205202-f0b27f4dc001/go.mod h1:qw4
 github.com/maargenton/go-testpredicate v0.4.4/go.mod h1:sn267JpJ65uvLQ7VtYzPLvXQiw0tHHw+KbCFzxRPOww=
 github.com/maargenton/go-testpredicate v0.6.3 h1:fWCIweFyxUnL0MVZvqjdOYAW0FYV3hCLSyWqND+zCo4=
 github.com/maargenton/go-testpredicate v0.6.3/go.mod h1:lUPR99Ipl1o49oRb5wEUwb/7KXrwc1FAVR6aZmCmoS8=
+github.com/maargenton/go-testpredicate v0.6.4 h1:bXvVpgmCBCyG290aLruxL7fv4k8QdXVyz0WeABVqVTQ=
+github.com/maargenton/go-testpredicate v0.6.4/go.mod h1:lUPR99Ipl1o49oRb5wEUwb/7KXrwc1FAVR6aZmCmoS8=
 github.com/pmezard/go-difflib v1.0.0 h1:4DBwDE0NGyQoBHbLQYPwSUPoCMWR5BEzIk/f1lZbAQM=
 github.com/pmezard/go-difflib v1.0.0/go.mod h1:iKH77koFhYxTK1pcRnkKkqfTogsbg7gZNVY4sRDYZ/4=
 github.com/yuin/goldmark v1.3.5/go.mod h1:mwnBkeHKe2W/ZEtQ+71ViKU8L12m81fl3OWwC1Zlc8k=
