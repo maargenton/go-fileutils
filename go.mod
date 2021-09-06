@@ -1,6 +1,6 @@
 module github.com/maargenton/fileutil
 
-go 1.14
+go 1.17
 
 require (
 	github.com/maargenton/go-errors v0.0.0-20200720205202-f0b27f4dc001
