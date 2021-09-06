@@ -1,11 +1,15 @@
 package dir_test
 
 import (
+	"io/fs"
+	"io/ioutil"
 	"os"
 	"path"
+	"path/filepath"
 	"testing"
 
-	"github.com/maargenton/fileutil/dir"
+	"github.com/maargenton/fileutil"
+	"github.com/maargenton/fileutil/pkg/dir"
 	"github.com/maargenton/go-testpredicate/pkg/asserter"
 	"github.com/maargenton/go-testpredicate/pkg/p"
 )
@@ -246,7 +250,7 @@ func TestScan(t *testing.T) {
 			assert.That(true, p.IsTrue())
 
 			var count = 0
-			var countingWalk = func(path string, info os.FileInfo, err error) error {
+			var countingWalk = func(path string, d fs.DirEntry, err error) error {
 				count++
 				return nil
 			}
@@ -288,7 +292,7 @@ func TestGlobMatcherScanFrom(t *testing.T) {
 			assert.That(true, p.IsTrue())
 
 			var count = 0
-			var countingWalk = func(path string, info os.FileInfo, err error) error {
+			var countingWalk = func(path string, d fs.DirEntry, err error) error {
 				count++
 				return nil
 			}
@@ -313,7 +317,7 @@ func TestGlobFunctionsErrorWithBadPattern(t *testing.T) {
 	assert.That(err, p.IsNoError())
 	defer cleanup()
 
-	var dummyWalk = func(path string, info os.FileInfo, err error) error {
+	var dummyWalk = func(path string, d fs.DirEntry, err error) error {
 		return err
 	}
 
@@ -332,3 +336,31 @@ func TestGlobFunctionsErrorWithBadPattern(t *testing.T) {
 
 // Test error path for dir.Glob, dir.GlobFrom, dir.Scan, dir.ScanFrom
 // ---------------------------------------------------------------------------
+
+// ---------------------------------------------------------------------------
+// Helpers
+// ---------------------------------------------------------------------------
+
+func setupTestFolder() (basepath string, cleanup func(), err error) {
+	basepath, err = ioutil.TempDir(".", "testdata-")
+	basepath = fileutil.Clean(basepath)
+	cleanup = func() {
+		if basepath != "" {
+			os.RemoveAll(basepath)
+		}
+	}
+	if err != nil {
+		return
+	}
+
+	var filenames []string
+	for _, n := range []string{"foo", "bar", "aaa", "bbb"} {
+		filenames = append(filenames,
+			filepath.Join(basepath, "src", n, n+".h"),
+			filepath.Join(basepath, "src", n, n+".cpp"),
+			filepath.Join(basepath, "src", n, n+"_test.cpp"),
+		)
+	}
+	err = fileutil.Touch(filenames...)
+	return
+}
