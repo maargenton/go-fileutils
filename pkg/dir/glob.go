@@ -183,11 +183,7 @@ func prefixMatchFragments(r string, fn []globFragment) bool {
 // pattern. The pattern must be specified according to the extended glob pattern
 // described in the package level documentation.
 func (m *GlobMatcher) Glob() (matches []string, err error) {
-	err = m.Scan(func(path string, d fs.DirEntry, err error) error {
-		matches = append(matches, path)
-		return err
-	})
-	return
+	return m.GlobFrom("")
 }
 
 // GlobFrom scans the file tree and returns a list of filenames matching the
@@ -195,8 +191,10 @@ func (m *GlobMatcher) Glob() (matches []string, err error) {
 // described in the package level documentation.
 func (m *GlobMatcher) GlobFrom(basepath string) (matches []string, err error) {
 	err = m.ScanFrom(basepath, func(path string, d fs.DirEntry, err error) error {
-		matches = append(matches, path)
-		return err
+		if err == nil {
+			matches = append(matches, path)
+		}
+		return nil
 	})
 	return
 }
@@ -217,10 +215,14 @@ func (m *GlobMatcher) ScanFrom(basepath string, walkFn fs.WalkDirFunc) error {
 			return filepath.SkipDir
 		}
 		if m.Match(path) {
-			if d != nil && d.IsDir() {
+			err = walkFn(path, d, err)
+
+			// If path is a match for the full pattern and a directory, there is
+			// no need t ogo further in.
+			if d != nil && d.IsDir() && err == nil {
 				err = filepath.SkipDir
 			}
-			return walkFn(path, d, err)
+			return err
 		}
 		return nil // Ignore any error if no match
 	}

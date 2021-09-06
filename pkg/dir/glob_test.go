@@ -8,23 +8,21 @@ import (
 	"path/filepath"
 	"testing"
 
+	"github.com/maargenton/go-testpredicate/pkg/require"
+	"github.com/maargenton/go-testpredicate/pkg/subexpr"
+
 	"github.com/maargenton/fileutil"
 	"github.com/maargenton/fileutil/pkg/dir"
-	"github.com/maargenton/go-testpredicate/pkg/asserter"
-	"github.com/maargenton/go-testpredicate/pkg/p"
 )
 
 // ---------------------------------------------------------------------------
 // dir.NewGlobMatcher()
 
 func TestNewGlobMatcherError(t *testing.T) {
-	assert := asserter.New(t, asserter.AbortOnError())
-	assert.That(nil, p.IsNil())
-
 	pattern := `**/src/*.{c,cc,cpp`
-	g, err := dir.NewGlobMatcher(pattern)
-	assert.That(err, p.IsNotNil())
-	assert.That(g, p.IsNil())
+	m, err := dir.NewGlobMatcher(pattern)
+	require.That(t, err).IsNotNil()
+	require.That(t, m).IsNil()
 }
 
 // dir.NewGlobMatcher()
@@ -34,29 +32,23 @@ func TestNewGlobMatcherError(t *testing.T) {
 // GlobMatcher.Match()
 
 func TestGlobMatcherMatch(t *testing.T) {
-	assert := asserter.New(t, asserter.AbortOnError())
-	assert.That(nil, p.IsNil())
-
 	pattern := `content/**/src/**/*.{c,cc,cpp,h,hh,hpp}`
-	g, err := dir.NewGlobMatcher(pattern)
-	assert.That(err, p.IsNoError())
-	assert.That(g, p.IsNotNil())
-	assert.That(g.Match("aaa/bbb/src/ccc/ddd/something.cpp"), p.IsFalse())
-	assert.That(g.Match("content/aaa/bbb/src/ccc/ddd/something.cpp"), p.IsTrue())
-	assert.That(g.Match("content/aaa/bbb/src/ccc/ddd/"), p.IsFalse())
+	m, err := dir.NewGlobMatcher(pattern)
+	require.That(t, err).IsNil()
+	require.That(t, m).IsNotNil()
+	require.That(t, m.Match("aaa/bbb/src/ccc/ddd/something.cpp")).IsFalse()
+	require.That(t, m.Match("content/aaa/bbb/src/ccc/ddd/something.cpp")).IsTrue()
+	require.That(t, m.Match("content/aaa/bbb/src/ccc/ddd/")).IsFalse()
 }
 
 func TestGlobMatcherMatchWithWildcardStart(t *testing.T) {
-	assert := asserter.New(t, asserter.AbortOnError())
-	assert.That(nil, p.IsNil())
-
 	pattern := `**/src/**/*.{c,cc,cpp,h,hh,hpp}`
-	g, err := dir.NewGlobMatcher(pattern)
-	assert.That(err, p.IsNoError())
-	assert.That(g, p.IsNotNil())
-	assert.That(g.Match("aaa/bbb/src/ccc/ddd/something.cpp"), p.IsTrue())
-	assert.That(g.Match("content/aaa/bbb/src/ccc/ddd/something.cpp"), p.IsTrue())
-	assert.That(g.Match("content/aaa/bbb/src/ccc/ddd/"), p.IsFalse())
+	m, err := dir.NewGlobMatcher(pattern)
+	require.That(t, err).IsNil()
+	require.That(t, m).IsNotNil()
+	require.That(t, m.Match("aaa/bbb/src/ccc/ddd/something.cpp")).IsTrue()
+	require.That(t, m.Match("content/aaa/bbb/src/ccc/ddd/something.cpp")).IsTrue()
+	require.That(t, m.Match("content/aaa/bbb/src/ccc/ddd/")).IsFalse()
 }
 
 // GlobMatcher.Match()
@@ -66,59 +58,50 @@ func TestGlobMatcherMatchWithWildcardStart(t *testing.T) {
 // GlobMatcher.PrefixMatch()
 
 func TestGlobMatcherPrefixMatch(t *testing.T) {
-	assert := asserter.New(t, asserter.AbortOnError())
-	assert.That(nil, p.IsNil())
-
 	pattern := `content/**/src/**/*.{c,cc,cpp,h,hh,hpp}`
-	g, err := dir.NewGlobMatcher(pattern)
-	assert.That(err, p.IsNoError())
-	assert.That(g, p.IsNotNil())
+	m, err := dir.NewGlobMatcher(pattern)
+	require.That(t, err).IsNil()
+	require.That(t, m).IsNotNil()
 
-	assert.That(g.PrefixMatch("content"), p.IsTrue())
-	assert.That(g.PrefixMatch("content/"), p.IsTrue())
-	assert.That(g.PrefixMatch("content/aaa"), p.IsTrue())
-	assert.That(g.PrefixMatch("content/aaa/"), p.IsTrue())
-	assert.That(g.PrefixMatch("content/aaa/bbb"), p.IsTrue())
-	assert.That(g.PrefixMatch("content/aaa/bbb/"), p.IsTrue())
-	assert.That(g.PrefixMatch("content/aaa/bbb/src"), p.IsTrue())
-	assert.That(g.PrefixMatch("content/aaa/bbb/src/"), p.IsTrue())
-	assert.That(g.PrefixMatch("content/aaa/bbb/src/ccc"), p.IsTrue())
-	assert.That(g.PrefixMatch("content/aaa/bbb/src/ccc/"), p.IsTrue())
-	assert.That(g.PrefixMatch("content/aaa/bbb/src/ccc/ddd"), p.IsTrue())
-	assert.That(g.PrefixMatch("content/aaa/bbb/src/ccc/ddd/"), p.IsTrue())
-	assert.That(g.PrefixMatch("content/aaa/bbb/src/ccc/ddd/something.cpp"), p.IsTrue())
+	require.That(t, m.PrefixMatch("content")).IsTrue()
+	require.That(t, m.PrefixMatch("content/")).IsTrue()
+	require.That(t, m.PrefixMatch("content/aaa")).IsTrue()
+	require.That(t, m.PrefixMatch("content/aaa/")).IsTrue()
+	require.That(t, m.PrefixMatch("content/aaa/bbb")).IsTrue()
+	require.That(t, m.PrefixMatch("content/aaa/bbb/")).IsTrue()
+	require.That(t, m.PrefixMatch("content/aaa/bbb/src")).IsTrue()
+	require.That(t, m.PrefixMatch("content/aaa/bbb/src/")).IsTrue()
+	require.That(t, m.PrefixMatch("content/aaa/bbb/src/ccc")).IsTrue()
+	require.That(t, m.PrefixMatch("content/aaa/bbb/src/ccc/")).IsTrue()
+	require.That(t, m.PrefixMatch("content/aaa/bbb/src/ccc/ddd")).IsTrue()
+	require.That(t, m.PrefixMatch("content/aaa/bbb/src/ccc/ddd/")).IsTrue()
+	require.That(t, m.PrefixMatch("content/aaa/bbb/src/ccc/ddd/something.cpp")).IsTrue()
 }
 
 func TestGlobMatcherPrefixMatchNoMatch(t *testing.T) {
-	assert := asserter.New(t, asserter.AbortOnError())
-	assert.That(nil, p.IsNil())
-
 	pattern := `src`
-	g, err := dir.NewGlobMatcher(pattern)
-	assert.That(err, p.IsNoError())
-	assert.That(g, p.IsNotNil())
+	m, err := dir.NewGlobMatcher(pattern)
+	require.That(t, err).IsNil()
+	require.That(t, m).IsNotNil()
 
-	assert.That(g.PrefixMatch("src"), p.IsTrue())
-	assert.That(g.PrefixMatch("src/"), p.IsTrue())
-	assert.That(g.PrefixMatch("src/ddd"), p.IsFalse())
-	assert.That(g.PrefixMatch("src/ddd/"), p.IsFalse())
-	assert.That(g.PrefixMatch("dst/ddd"), p.IsFalse())
-	assert.That(g.PrefixMatch("dst/ddd/"), p.IsFalse())
+	require.That(t, m.PrefixMatch("src")).IsTrue()
+	require.That(t, m.PrefixMatch("src/")).IsTrue()
+	require.That(t, m.PrefixMatch("src/ddd")).IsFalse()
+	require.That(t, m.PrefixMatch("src/ddd/")).IsFalse()
+	require.That(t, m.PrefixMatch("dst/ddd")).IsFalse()
+	require.That(t, m.PrefixMatch("dst/ddd/")).IsFalse()
 }
 
 func TestGlobMatcherPrefixMatchWithLeadingWildcardAlwaysMatch(t *testing.T) {
-	assert := asserter.New(t, asserter.AbortOnError())
-	assert.That(nil, p.IsNil())
-
 	pattern := `**/src`
-	g, err := dir.NewGlobMatcher(pattern)
-	assert.That(err, p.IsNoError())
-	assert.That(g, p.IsNotNil())
+	m, err := dir.NewGlobMatcher(pattern)
+	require.That(t, err).IsNil()
+	require.That(t, m).IsNotNil()
 
-	assert.That(g.PrefixMatch("src"), p.IsTrue())
-	assert.That(g.PrefixMatch("src/"), p.IsTrue())
-	assert.That(g.PrefixMatch("src/ddd"), p.IsTrue())
-	assert.That(g.PrefixMatch("src/ddd/"), p.IsTrue())
+	require.That(t, m.PrefixMatch("src")).IsTrue()
+	require.That(t, m.PrefixMatch("src/")).IsTrue()
+	require.That(t, m.PrefixMatch("src/ddd")).IsTrue()
+	require.That(t, m.PrefixMatch("src/ddd/")).IsTrue()
 }
 
 // GlobMatcher.Match()
@@ -139,30 +122,26 @@ func TestGlob(t *testing.T) {
 		{`src/**/*.{h,cpp}`, 12},
 	}
 
-	assert := asserter.New(t, asserter.AbortOnError())
 	basepath, cleanup, err := setupTestFolder()
-	assert.That(err, p.IsNoError())
+	require.That(t, err).IsNil()
 	defer cleanup()
 
 	for _, tc := range tcs {
 		t.Run(tc.pattern, func(t *testing.T) {
-			assert := asserter.New(t, asserter.AbortOnError())
-			assert.That(true, p.IsTrue())
-
 			pattern := path.Join(basepath, tc.pattern)
 			matches, err := dir.Glob(pattern)
 
-			assert.That(err, p.IsNoError())
-			assert.That(matches, p.Length(p.Eq(tc.count)))
-			assert.That(matches, p.All(p.StartsWith(basepath)))
+			require.That(t, err).IsNil()
+			require.That(t, matches).Length().Eq(tc.count)
+			require.That(t, matches).All(
+				subexpr.Value().StartsWith(basepath))
 		})
 	}
 }
 
 func TestGlobStarFromCurrentDirectory(t *testing.T) {
-	assert := asserter.New(t, asserter.AbortOnError())
 	basepath, cleanup, err := setupTestFolder()
-	assert.That(err, p.IsNoError())
+	require.That(t, err).IsNil()
 	defer cleanup()
 
 	pwd, _ := os.Getwd()
@@ -172,23 +151,27 @@ func TestGlobStarFromCurrentDirectory(t *testing.T) {
 	}()
 
 	matches, err := dir.Glob("*")
-	assert.That(err, p.IsNoError())
-	assert.That(matches, p.IsEqualSet([]string{"src/"}))
+	require.That(t, err).IsNil()
+	require.That(t, matches).IsEqualSet([]string{"src/"})
 }
 
 func TestGlobFromSystemRoot(t *testing.T) {
-	assert := asserter.New(t, asserter.AbortOnError())
-
 	matches, err := dir.Glob("/d*")
-	assert.That(err, p.IsNoError())
-	assert.That(matches, p.Contains([]string{"/dev/"}))
+	require.That(t, err).IsNil()
+	require.That(t, matches).Contains([]string{"/dev/"})
 }
+
+// func TestGlobFromSystemRoot2(t *testing.T) {
+// 	matches, err := dir.Glob("/dev/std*")
+// 	require.That(t, err).IsNil()
+// 	require.That(t, matches).Contains([]string{"/dev/"})
+// }
 
 // dir.Glob()
 // ---------------------------------------------------------------------------
 
 // ---------------------------------------------------------------------------
-// GlobMatcher.GlobFrom()
+// dir.GlobFrom()
 
 func TestGlobMatcherGlobFrom(t *testing.T) {
 	var tcs = []struct {
@@ -201,27 +184,23 @@ func TestGlobMatcherGlobFrom(t *testing.T) {
 		{`src/**/*_test.{h,hh,hpp}`, 0},
 		{`src/**/*.{h,cpp}`, 12},
 	}
-
-	assert := asserter.New(t, asserter.AbortOnError())
 	basepath, cleanup, err := setupTestFolder()
-	assert.That(err, p.IsNoError())
+	require.That(t, err).IsNil()
 	defer cleanup()
 
 	for _, tc := range tcs {
 		t.Run(tc.pattern, func(t *testing.T) {
-			assert := asserter.New(t, asserter.AbortOnError())
-			assert.That(true, p.IsTrue())
-
 			matches, err := dir.GlobFrom(basepath, tc.pattern)
 
-			assert.That(err, p.IsNoError())
-			assert.That(matches, p.Length(p.Eq(tc.count)))
-			assert.That(matches, p.All(p.StartsWith("src")))
+			require.That(t, err).IsNil()
+			require.That(t, matches).Length().Eq(tc.count)
+			require.That(t, matches).All(
+				subexpr.Value().StartsWith("src"))
 		})
 	}
 }
 
-// GlobMatcher.GlobFrom()
+// dir.GlobFrom()
 // ---------------------------------------------------------------------------
 
 // ---------------------------------------------------------------------------
@@ -238,17 +217,12 @@ func TestScan(t *testing.T) {
 		{`src/**/*_test.{h,hh,hpp}`, 0},
 		{`src/**/*.{h,cpp}`, 12},
 	}
-
-	assert := asserter.New(t, asserter.AbortOnError())
 	basepath, cleanup, err := setupTestFolder()
-	assert.That(err, p.IsNoError())
+	require.That(t, err).IsNil()
 	defer cleanup()
 
 	for _, tc := range tcs {
 		t.Run(tc.pattern, func(t *testing.T) {
-			assert := asserter.New(t, asserter.AbortOnError())
-			assert.That(true, p.IsTrue())
-
 			var count = 0
 			var countingWalk = func(path string, d fs.DirEntry, err error) error {
 				count++
@@ -257,8 +231,8 @@ func TestScan(t *testing.T) {
 
 			err = dir.Scan(path.Join(basepath, tc.pattern), countingWalk)
 
-			assert.That(err, p.IsNoError())
-			assert.That(count, p.Eq(tc.count))
+			require.That(t, err).IsNil()
+			require.That(t, count).Eq(tc.count)
 		})
 	}
 }
@@ -280,17 +254,12 @@ func TestGlobMatcherScanFrom(t *testing.T) {
 		{`src/**/*_test.{h,hh,hpp}`, 0},
 		{`src/**/*.{h,cpp}`, 12},
 	}
-
-	assert := asserter.New(t, asserter.AbortOnError())
 	basepath, cleanup, err := setupTestFolder()
-	assert.That(err, p.IsNoError())
+	require.That(t, err).IsNil()
 	defer cleanup()
 
 	for _, tc := range tcs {
 		t.Run(tc.pattern, func(t *testing.T) {
-			assert := asserter.New(t, asserter.AbortOnError())
-			assert.That(true, p.IsTrue())
-
 			var count = 0
 			var countingWalk = func(path string, d fs.DirEntry, err error) error {
 				count++
@@ -299,8 +268,8 @@ func TestGlobMatcherScanFrom(t *testing.T) {
 
 			err = dir.ScanFrom(basepath, tc.pattern, countingWalk)
 
-			assert.That(err, p.IsNoError())
-			assert.That(count, p.Eq(tc.count))
+			require.That(t, err).IsNil()
+			require.That(t, count).Eq(tc.count)
 		})
 	}
 }
@@ -312,9 +281,8 @@ func TestGlobMatcherScanFrom(t *testing.T) {
 // Test error path for dir.Glob, dir.GlobFrom, dir.Scan, dir.ScanFrom
 
 func TestGlobFunctionsErrorWithBadPattern(t *testing.T) {
-	assert := asserter.New(t, asserter.AbortOnError())
 	basepath, cleanup, err := setupTestFolder()
-	assert.That(err, p.IsNoError())
+	require.That(t, err).IsNil()
 	defer cleanup()
 
 	var dummyWalk = func(path string, d fs.DirEntry, err error) error {
@@ -322,16 +290,16 @@ func TestGlobFunctionsErrorWithBadPattern(t *testing.T) {
 	}
 
 	_, err = dir.Glob(path.Join(basepath, "src/**/*/{"))
-	assert.That(err, p.IsNotNil())
+	require.That(t, err).IsNotNil()
 
 	_, err = dir.GlobFrom(basepath, "src/**/*/{")
-	assert.That(err, p.IsNotNil())
+	require.That(t, err).IsNotNil()
 
 	err = dir.Scan(path.Join(basepath, "src/**/*/{"), dummyWalk)
-	assert.That(err, p.IsNotNil())
+	require.That(t, err).IsNotNil()
 
 	err = dir.ScanFrom(basepath, "src/**/*/{", dummyWalk)
-	assert.That(err, p.IsNotNil())
+	require.That(t, err).IsNotNil()
 }
 
 // Test error path for dir.Glob, dir.GlobFrom, dir.Scan, dir.ScanFrom
