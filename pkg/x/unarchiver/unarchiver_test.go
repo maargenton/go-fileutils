@@ -8,11 +8,12 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/maargenton/fileutil"
-	"github.com/maargenton/fileutil/pkg/unarchiver"
 	"github.com/maargenton/go-testpredicate/pkg/asserter"
 	"github.com/maargenton/go-testpredicate/pkg/p"
 	"github.com/pmezard/go-difflib/difflib"
+
+	"github.com/maargenton/fileutil"
+	"github.com/maargenton/fileutil/pkg/x/unarchiver"
 )
 
 func printItem(w io.Writer, item unarchiver.ArchiveItem) {
