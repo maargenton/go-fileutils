@@ -217,7 +217,7 @@ func (m *GlobMatcher) ScanFrom(basepath string, walkFn fs.WalkDirFunc) error {
 			return filepath.SkipDir
 		}
 		if m.Match(path) {
-			if d.IsDir() {
+			if d != nil && d.IsDir() {
 				err = filepath.SkipDir
 			}
 			return walkFn(path, d, err)
