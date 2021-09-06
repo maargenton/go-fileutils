@@ -13,7 +13,7 @@ import (
 	"testing"
 
 	"github.com/maargenton/fileutil"
-	"github.com/maargenton/fileutil/popen"
+	"github.com/maargenton/fileutil/pkg/popen"
 
 	"github.com/maargenton/go-testpredicate/pkg/asserter"
 	"github.com/maargenton/go-testpredicate/pkg/p"

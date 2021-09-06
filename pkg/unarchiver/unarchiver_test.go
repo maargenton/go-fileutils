@@ -9,7 +9,7 @@ import (
 	"testing"
 
 	"github.com/maargenton/fileutil"
-	"github.com/maargenton/fileutil/unarchiver"
+	"github.com/maargenton/fileutil/pkg/unarchiver"
 	"github.com/maargenton/go-testpredicate/pkg/asserter"
 	"github.com/maargenton/go-testpredicate/pkg/p"
 	"github.com/pmezard/go-difflib/difflib"
