@@ -83,7 +83,7 @@ func TestSymlinks(t *testing.T) {
 	var records []string
 	var f = makeWalkDirPathRecorder(&records, nil)
 
-	err = fileutil.WalkDirSymlink(basepath, "", f)
+	err = fileutil.WalkDir(basepath, "", f)
 	verify.That(t, err).IsNil()
 	verify.That(t, records).Any(subexpr.Value().StartsWith("src/foo/"))
 	verify.That(t, records).Any(subexpr.Value().StartsWith("src/bar/"))
@@ -101,7 +101,7 @@ func TestSymlinksRecursion(t *testing.T) {
 	var records []walkErrorRecord
 	var f = makeWalkDirErrorRecorder(&records, nil)
 
-	err = fileutil.WalkDirSymlink(basepath, "", f)
+	err = fileutil.WalkDir(basepath, "", f)
 	verify.That(t, err).IsNil()
 	verify.That(t, records).Field("Err").All(
 		subexpr.Value().IsError(fileutil.ErrRecursiveSymlink),
@@ -121,7 +121,7 @@ func TestSymlinksBroken(t *testing.T) {
 	var records []walkErrorRecord
 	var f = makeWalkDirErrorRecorder(&records, nil)
 
-	err = fileutil.WalkDirSymlink(basepath, "", f)
+	err = fileutil.WalkDir(basepath, "", f)
 	verify.That(t, err).IsNil()
 	verify.That(t, records).Field("Path").IsEqualSet([]string{
 		"src/src3",

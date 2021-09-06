@@ -48,8 +48,16 @@ provided by the `filepath` package.
 - `fileutil.ExpandPath()` and `fileutil.ExpandPathRelative()` expand an relative
   or absolute path into an absolute path, handling `~/` and environment variable
   expansion, using ether `$(pwd)` or a given `basepath` as base path.
+- `fileutil.Clean()`, `fileutil.Rel()` and `fileutil.Join()` are equivalent to
+  their `filepath` counterpart, but preserve any trailing path separator,
+  commonly used to indicate a directory. In addition, `fileutil.Join()` properly
+  handles the case where one of the elements is an absolute path, resulting in
+  an absolute path with all preceding elements ignored.
 
 ### Filesystem scanning and globing
+
+`fileutil.WalkDir()` implements an enhanced version of `filepath.WalkDir()` that
+follows symlinks safely and adds some flexibility in the way paths are reported.
 
 `dir.Glob()` and `dir.Scan()` are convenient functions to locate and
 enumerate files matching a particular pattern. The pattern is specified as an

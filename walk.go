@@ -10,21 +10,31 @@ import (
 	"github.com/maargenton/go-errors"
 )
 
-// WalkDir is similar to filepath.WalkDir with a few additions to make it more
-// convenient to use in common cases.
+// ErrRecursiveSymlink is a sentinel error returned during symlink traversal if
+// the target path is a symlink that has already been visited.
+var ErrRecursiveSymlink = errors.Sentinel("ErrRecursiveSymlink")
+
+// WalkDir is similar to `filepath.WalkDir()`, but it follows symlinks and takes
+// an additional `prefix` argument. The walk starts at '<prefix>/<root>' and the
+// paths are reported relative to `prefix`; the starting path is always recursed
+// into, but never reported unless an error occurs during filesystem operation.
+// Either or both of `prefix` and `root` can be empty, a relative path or an
+// absolute path; if `root` is an absolute path, `prefix` is ignored, and all
+// reported paths are absolute. In a path refers to a directory, it is reported
+// with a trailing path separator.
 //
-// It takes an additional parameter `prefix` so that the root of the walk is
-// <prefix>/<root>, and paths are reported relative to it, e.g.
-// '<prefix>/<root>/path/to/file' is reported as '<root>/path/to/file'.
-//
-// The root of the walk is always recursed into, but never reported unless an
-// error occurs during filesystem operation.
-//
-// If `root` is an absolute path, `prefix` is ignored and all reported paths are
-// also absolute.
-//
-// It reports directory paths with a tailing path separator.
+// When symlinks are encountered, the path is reported with the FileInfo of the
+// destination, and if it is a directory, it is traversed unless an error is
+// returned. Any error that occurs while evaluating the symlink is reported to
+// the client. If the symlink points back to a folder along the current path,
+// the client is called with ErrRecursiveSymlink and the link evaluation stops
+// there.
 func WalkDir(prefix, root string, fn fs.WalkDirFunc) error {
+	visited := make([]string, 0, 16)
+	return walkDir(prefix, root, makeSymlinkWalkFunc(visited, prefix, "", fn))
+}
+
+func walkDir(prefix, root string, fn fs.WalkDirFunc) error {
 	walkRoot := Join(prefix, root)
 	if filepath.IsAbs(root) {
 		walkRoot = Clean(root)
@@ -61,22 +71,6 @@ func WalkDir(prefix, root string, fn fs.WalkDirFunc) error {
 	return filepath.WalkDir(walkRoot, f)
 }
 
-// ErrRecursiveSymlink is a sentinel error returned during symlink traversal if
-// the target path is a symlink that has already been visited.
-var ErrRecursiveSymlink = errors.Sentinel("ErrRecursiveSymlink")
-
-// WalkDirSymlink is similar to `WalkDir()`, but also follows symlinks and
-// detects potential recursions. When evaluating symlinks, any error evaluating
-// the link is passed to the client, but obviously the link is not followed. If
-// the link points to a directory, the client is called with wrapped FileInfo of
-// that directory. If the link points back to a folder along the current path,
-// the client is called with ErrRecursiveSymlink and the link evaluation stops
-// there.
-func WalkDirSymlink(prefix, root string, fn fs.WalkDirFunc) error {
-	visited := make([]string, 0, 16)
-	return WalkDir(prefix, root, makeSymlinkWalkFunc(visited, prefix, "", fn))
-}
-
 func makeSymlinkWalkFunc(visited []string, basepath, clientPrefix string, clientFn fs.WalkDirFunc) fs.WalkDirFunc {
 	f := func(path string, d fs.DirEntry, err error) error {
 		clientPath := Join(clientPrefix, path)
@@ -105,17 +99,28 @@ func makeSymlinkWalkFunc(visited []string, basepath, clientPrefix string, client
 		// Check if visited and recurse
 		for _, v := range visited {
 			if strings.HasPrefix(realpath, v) {
-				return clientFn(clientPath, d, ErrRecursiveSymlink)
+				err = clientFn(clientPath, d, ErrRecursiveSymlink)
+				if errors.Is(err, fs.SkipDir) {
+					// The caller does not know the symlink points to a
+					// directory and would skip the rest of the parent directory
+					return nil
+				}
+				return err
 			}
 		}
 
 		err = clientFn(clientPath, d, err)
 		if err != nil {
+			if errors.Is(err, fs.SkipDir) {
+				// The caller does not know the symlink points to a directory
+				// and would skip the rest of the parent directory
+				return nil
+			}
 			return err
 		}
 
 		visited := append(visited, realpath)
-		return WalkDir(realpath, "",
+		return walkDir(realpath, "",
 			makeSymlinkWalkFunc(visited, realpath, path, clientFn))
 	}
 	return f
