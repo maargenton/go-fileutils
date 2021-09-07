@@ -7,7 +7,7 @@ import (
 	"fmt"
 	"math"
 
-	"github.com/maargenton/fileutil/pkg/x/downloader"
+	"github.com/maargenton/go-fileutils/pkg/x/downloader"
 )
 
 var testURL = "https://github.com/jung-kurt/gofpdf/archive/v2.17.2.tar.gz"

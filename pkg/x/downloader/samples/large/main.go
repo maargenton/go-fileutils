@@ -8,7 +8,7 @@ import (
 	"math"
 	"time"
 
-	"github.com/maargenton/fileutil/pkg/x/downloader"
+	"github.com/maargenton/go-fileutils/pkg/x/downloader"
 )
 
 var testURL = "https://developer.arm.com/-/media/Files/downloads/gnu-rm/9-2019q4/gcc-arm-none-eabi-9-2019-q4-major-mac.tar.bz2?revision=c2c4fe0e-c0b6-4162-97e6-7707e12f2b6e&amp;la=en&amp;hash=EC9D4B5F5B050267B924F876B306D72CDF3BDDC0"

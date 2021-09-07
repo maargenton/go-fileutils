@@ -1,3 +1,3 @@
-// Package fileutil contiains a collection of utility function to help
+// package fileutils contiains a collection of utility function to help
 // interfaction with the filesystem
-package fileutil
+package fileutils

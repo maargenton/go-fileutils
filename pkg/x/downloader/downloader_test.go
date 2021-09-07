@@ -8,7 +8,7 @@ import (
 	"github.com/maargenton/go-testpredicate/pkg/asserter"
 	"github.com/maargenton/go-testpredicate/pkg/p"
 
-	"github.com/maargenton/fileutil/pkg/x/downloader"
+	"github.com/maargenton/go-fileutils/pkg/x/downloader"
 )
 
 // ---------------------------------------------------------------------------

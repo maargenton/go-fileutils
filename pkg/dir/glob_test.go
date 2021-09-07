@@ -8,11 +8,11 @@ import (
 	"path/filepath"
 	"testing"
 
+	"github.com/maargenton/go-fileutils"
 	"github.com/maargenton/go-testpredicate/pkg/require"
 	"github.com/maargenton/go-testpredicate/pkg/subexpr"
 
-	"github.com/maargenton/fileutil"
-	"github.com/maargenton/fileutil/pkg/dir"
+	"github.com/maargenton/go-fileutils/pkg/dir"
 )
 
 // ---------------------------------------------------------------------------
@@ -311,7 +311,7 @@ func TestGlobFunctionsErrorWithBadPattern(t *testing.T) {
 
 func setupTestFolder() (basepath string, cleanup func(), err error) {
 	basepath, err = ioutil.TempDir(".", "testdata-")
-	basepath = fileutil.Clean(basepath)
+	basepath = fileutils.Clean(basepath)
 	cleanup = func() {
 		if basepath != "" {
 			os.RemoveAll(basepath)
@@ -329,6 +329,6 @@ func setupTestFolder() (basepath string, cleanup func(), err error) {
 			filepath.Join(basepath, "src", n, n+"_test.cpp"),
 		)
 	}
-	err = fileutil.Touch(filenames...)
+	err = fileutils.Touch(filenames...)
 	return
 }

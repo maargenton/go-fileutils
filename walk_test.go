@@ -1,4 +1,4 @@
-package fileutil_test
+package fileutils_test
 
 import (
 	"io/fs"
@@ -7,7 +7,7 @@ import (
 	"path/filepath"
 	"testing"
 
-	"github.com/maargenton/fileutil"
+	"github.com/maargenton/go-fileutils"
 	"github.com/maargenton/go-testpredicate/pkg/require"
 	"github.com/maargenton/go-testpredicate/pkg/subexpr"
 	"github.com/maargenton/go-testpredicate/pkg/verify"
@@ -17,7 +17,7 @@ func TestWalkDirWithPrefix(t *testing.T) {
 	var records []string
 	var f = makeWalkDirPathRecorder(&records, nil)
 
-	err := fileutil.WalkDir("testdata", "", f)
+	err := fileutils.WalkDir("testdata", "", f)
 	verify.That(t, err).IsError(nil)
 
 	verify.That(t, records).IsEqualSet([]string{
@@ -31,7 +31,7 @@ func TestWalkDirWithRoot(t *testing.T) {
 	var records []string
 	var f = makeWalkDirPathRecorder(&records, nil)
 
-	err := fileutil.WalkDir("", "testdata", f)
+	err := fileutils.WalkDir("", "testdata", f)
 	verify.That(t, err).IsError(nil)
 	verify.That(t, records).IsEqualSet([]string{
 		"testdata/src/",
@@ -44,7 +44,7 @@ func TestWalkDirWithNoRootNoPrefix(t *testing.T) {
 	var records []string
 	var f = makeWalkDirPathRecorder(&records, nil)
 
-	err := fileutil.WalkDir("", "", f)
+	err := fileutils.WalkDir("", "", f)
 	verify.That(t, err).IsError(nil)
 	verify.That(t, records).IsSupersetOf([]string{
 		"testdata/",
@@ -61,7 +61,7 @@ func TestWalkDirFromFsRoot(t *testing.T) {
 	var records []string
 	var f = makeWalkDirPathRecorder(&records, skipDirFunc)
 
-	err := fileutil.WalkDir("", "/", f)
+	err := fileutils.WalkDir("", "/", f)
 	verify.That(t, err).IsError(nil)
 	verify.That(t, records).IsSupersetOf([]string{
 		"/bin/",
@@ -83,7 +83,7 @@ func TestSymlinks(t *testing.T) {
 	var records []string
 	var f = makeWalkDirPathRecorder(&records, nil)
 
-	err = fileutil.WalkDir(basepath, "", f)
+	err = fileutils.WalkDir(basepath, "", f)
 	verify.That(t, err).IsNil()
 	verify.That(t, records).Any(subexpr.Value().StartsWith("src/foo/"))
 	verify.That(t, records).Any(subexpr.Value().StartsWith("src/bar/"))
@@ -101,10 +101,10 @@ func TestSymlinksRecursion(t *testing.T) {
 	var records []walkErrorRecord
 	var f = makeWalkDirErrorRecorder(&records, nil)
 
-	err = fileutil.WalkDir(basepath, "", f)
+	err = fileutils.WalkDir(basepath, "", f)
 	verify.That(t, err).IsNil()
 	verify.That(t, records).Field("Err").All(
-		subexpr.Value().IsError(fileutil.ErrRecursiveSymlink),
+		subexpr.Value().IsError(fileutils.ErrRecursiveSymlink),
 	)
 	verify.That(t, records).Field("Path").IsEqualSet([]string{
 		"dst/src/",
@@ -121,7 +121,7 @@ func TestSymlinksBroken(t *testing.T) {
 	var records []walkErrorRecord
 	var f = makeWalkDirErrorRecorder(&records, nil)
 
-	err = fileutil.WalkDir(basepath, "", f)
+	err = fileutils.WalkDir(basepath, "", f)
 	verify.That(t, err).IsNil()
 	verify.That(t, records).Field("Path").IsEqualSet([]string{
 		"src/src3",
@@ -153,7 +153,7 @@ func setupTestFolder() (basepath string, cleanup func(), err error) {
 			filepath.Join(basepath, "src", n, n+"_test.cpp"),
 		)
 	}
-	err = fileutil.Touch(filenames...)
+	err = fileutils.Touch(filenames...)
 	return
 }
 

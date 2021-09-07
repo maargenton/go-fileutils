@@ -1,4 +1,4 @@
-package fileutil_test
+package fileutils_test
 
 import (
 	"fmt"
@@ -6,12 +6,12 @@ import (
 	"path/filepath"
 	"testing"
 
-	"github.com/maargenton/fileutil"
+	"github.com/maargenton/go-fileutils"
 	"github.com/maargenton/go-testpredicate/pkg/require"
 )
 
 // ---------------------------------------------------------------------------
-// fileutil.Clean
+// fileutils.Clean
 
 func TestClean(t *testing.T) {
 	var tcs = []struct {
@@ -34,7 +34,7 @@ func TestClean(t *testing.T) {
 	for _, tc := range tcs {
 		t.Run(fmt.Sprintf("Given %v", tc.input), func(t *testing.T) {
 			t.Run("when calling Clean", func(t *testing.T) {
-				output := fileutil.Clean(tc.input)
+				output := fileutils.Clean(tc.input)
 				t.Run("then output match expected", func(t *testing.T) {
 					require.That(t, output).Eq(tc.output)
 				})
@@ -43,11 +43,11 @@ func TestClean(t *testing.T) {
 	}
 }
 
-// fileutil.Clean
+// fileutils.Clean
 // ---------------------------------------------------------------------------
 
 // ---------------------------------------------------------------------------
-// fileutil.Rel
+// fileutils.Rel
 func TestRel(t *testing.T) {
 	var tcs = []struct {
 		basepath, targetpath, output string
@@ -62,7 +62,7 @@ func TestRel(t *testing.T) {
 	for _, tc := range tcs {
 		t.Run(fmt.Sprintf("Given %v + %v", tc.basepath, tc.targetpath), func(t *testing.T) {
 			t.Run("when calling Clean", func(t *testing.T) {
-				output, err := fileutil.Rel(tc.basepath, tc.targetpath)
+				output, err := fileutils.Rel(tc.basepath, tc.targetpath)
 				require.That(t, err).IsNil()
 				t.Run("then output match expected", func(t *testing.T) {
 					require.That(t, output).Eq(tc.output)
@@ -72,11 +72,11 @@ func TestRel(t *testing.T) {
 	}
 }
 
-// fileutil.Rel
+// fileutils.Rel
 // ---------------------------------------------------------------------------
 
 // ---------------------------------------------------------------------------
-// fileutil.Join
+// fileutils.Join
 
 func TestJoin(t *testing.T) {
 	var tcs = []struct {
@@ -96,7 +96,7 @@ func TestJoin(t *testing.T) {
 	for _, tc := range tcs {
 		t.Run(fmt.Sprintf("Given %v", tc.input), func(t *testing.T) {
 			t.Run("when calling Join", func(t *testing.T) {
-				output := fileutil.Join(tc.input...)
+				output := fileutils.Join(tc.input...)
 				t.Run("then output match expected", func(t *testing.T) {
 					require.That(t, output).Eq(tc.output)
 				})
@@ -105,7 +105,7 @@ func TestJoin(t *testing.T) {
 	}
 }
 
-// fileutil.Join
+// fileutils.Join
 // ---------------------------------------------------------------------------
 
 // ---------------------------------------------------------------------------
@@ -113,7 +113,7 @@ func TestJoin(t *testing.T) {
 
 func TestRewriteFilenameFull(t *testing.T) {
 	var input = "path/to/file.txt"
-	var output = fileutil.RewriteFilename(input, &fileutil.RewriteOpts{
+	var output = fileutils.RewriteFilename(input, &fileutils.RewriteOpts{
 		Dirname: "other/path/to/",
 		Prefix:  "prefix-",
 		Suffix:  "-suffix",
@@ -124,7 +124,7 @@ func TestRewriteFilenameFull(t *testing.T) {
 
 func TestRewriteFilenameNoDotExt(t *testing.T) {
 	var input = "path/to/file.txt"
-	var output = fileutil.RewriteFilename(input, &fileutil.RewriteOpts{
+	var output = fileutils.RewriteFilename(input, &fileutils.RewriteOpts{
 		Dirname: "other/path/to",
 		Prefix:  "prefix-",
 		Suffix:  "-suffix",
@@ -170,7 +170,7 @@ func TestExpandPath(t *testing.T) {
 
 	for _, tc := range tcs {
 		t.Run(tc.input, func(t *testing.T) {
-			output, err := fileutil.ExpandPath(tc.input)
+			output, err := fileutils.ExpandPath(tc.input)
 			require.That(t, err).IsNil()
 			require.That(t, output).Eq(tc.output)
 		})
@@ -187,7 +187,7 @@ func TestExpandPathFromHome(t *testing.T) {
 	var home, _ = os.UserHomeDir()
 	for _, tc := range tcs {
 		t.Run(tc.input, func(t *testing.T) {
-			output, err := fileutil.ExpandPath(tc.input)
+			output, err := fileutils.ExpandPath(tc.input)
 			expected := filepath.Join(home, tc.output)
 
 			require.That(t, err).IsNil()
@@ -205,7 +205,7 @@ func TestExpandPathFromPwd(t *testing.T) {
 	var pwd, _ = os.Getwd()
 	for _, tc := range tcs {
 		t.Run(tc.input, func(t *testing.T) {
-			output, err := fileutil.ExpandPath(tc.input)
+			output, err := fileutils.ExpandPath(tc.input)
 			expected := filepath.Join(pwd, tc.output)
 
 			require.That(t, err).IsNil()
@@ -230,7 +230,7 @@ func TestExpandPathRelative(t *testing.T) {
 	// var pwd, _ = os.Getwd()
 	for _, tc := range tcs {
 		t.Run(tc.input, func(t *testing.T) {
-			output, err := fileutil.ExpandPathRelative(tc.input, tc.basepath)
+			output, err := fileutils.ExpandPathRelative(tc.input, tc.basepath)
 			expected := tc.output //filepath.Join(pwd, tc.output)
 
 			require.That(t, err).IsNil()
@@ -248,7 +248,7 @@ func TestExpandPathRelativeFromPwd(t *testing.T) {
 	var pwd, _ = os.Getwd()
 	for _, tc := range tcs {
 		t.Run(tc.input, func(t *testing.T) {
-			output, err := fileutil.ExpandPathRelative(tc.input, tc.basepath)
+			output, err := fileutils.ExpandPathRelative(tc.input, tc.basepath)
 			expected := filepath.Join(pwd, tc.output)
 
 			require.That(t, err).IsNil()

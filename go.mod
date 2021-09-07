@@ -1,4 +1,4 @@
-module github.com/maargenton/fileutil
+module github.com/maargenton/go-fileutils
 
 go 1.17
 

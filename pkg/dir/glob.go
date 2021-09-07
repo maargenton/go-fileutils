@@ -8,7 +8,7 @@ import (
 	"regexp"
 	"strings"
 
-	"github.com/maargenton/fileutil"
+	"github.com/maargenton/go-fileutils"
 	// "golang.org/x/tools/internal/fastwalk"
 )
 
@@ -227,7 +227,7 @@ func (m *GlobMatcher) ScanFrom(basepath string, walkFn fs.WalkDirFunc) error {
 		return nil // Ignore any error if no match
 	}
 
-	return fileutil.WalkDir(basepath, m.prefix, f)
+	return fileutils.WalkDir(basepath, m.prefix, f)
 }
 
 // GlobMatcher

@@ -12,8 +12,8 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/maargenton/fileutil"
-	"github.com/maargenton/fileutil/pkg/popen"
+	"github.com/maargenton/go-fileutils"
+	"github.com/maargenton/go-fileutils/pkg/popen"
 
 	"github.com/maargenton/go-testpredicate/pkg/asserter"
 	"github.com/maargenton/go-testpredicate/pkg/p"
@@ -142,7 +142,7 @@ func TestCommandStdoutToFile(t *testing.T) {
 	assert.That(stdout, p.Eq("")) // Discarded when written to file
 
 	var linecnt = 0
-	fileutil.ReadFile(stdoutFile, func(r io.Reader) error {
+	fileutils.ReadFile(stdoutFile, func(r io.Reader) error {
 		var scanner = bufio.NewScanner(r)
 		for scanner.Scan() {
 			linecnt++
@@ -239,7 +239,7 @@ func TestCommandStderrToFile(t *testing.T) {
 	assert.That(stderr, p.Eq("")) // Discarded when written to file
 
 	var linecnt = 0
-	fileutil.ReadFile(stderrFile, func(r io.Reader) error {
+	fileutils.ReadFile(stderrFile, func(r io.Reader) error {
 		var scanner = bufio.NewScanner(r)
 		for scanner.Scan() {
 			linecnt++

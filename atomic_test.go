@@ -1,4 +1,4 @@
-package fileutil_test
+package fileutils_test
 
 import (
 	"encoding/json"
@@ -9,7 +9,7 @@ import (
 	"sync"
 	"testing"
 
-	"github.com/maargenton/fileutil"
+	"github.com/maargenton/go-fileutils"
 	"github.com/maargenton/go-testpredicate/pkg/asserter"
 	"github.com/maargenton/go-testpredicate/pkg/p"
 )
@@ -21,7 +21,7 @@ func TestOpenTemp(t *testing.T) {
 	defer os.RemoveAll(dir) // clean up
 
 	filename := filepath.Join(dir, "file.txt")
-	f, err := fileutil.OpenTemp(filename, "tmp")
+	f, err := fileutils.OpenTemp(filename, "tmp")
 	if f != nil {
 		defer os.Remove(f.Name())
 	}
@@ -47,14 +47,14 @@ func TestReadWriteFile(t *testing.T) {
 	// Write file
 	var content = &Content{Seq: 125}
 	filename := filepath.Join(dir, "file.txt")
-	err = fileutil.WriteFile(filename, func(w io.Writer) error {
+	err = fileutils.WriteFile(filename, func(w io.Writer) error {
 		return json.NewEncoder(w).Encode(content)
 	})
 	assert.That(err, p.IsNoError())
 
 	// Read file
 	content = &Content{}
-	err = fileutil.ReadFile(filename, func(r io.Reader) error {
+	err = fileutils.ReadFile(filename, func(r io.Reader) error {
 		return json.NewDecoder(r).Decode(content)
 	})
 
@@ -76,7 +76,7 @@ func TestWriteFileIsAtomic(t *testing.T) {
 
 		go func() {
 			content := &Content{Seq: i}
-			err := fileutil.WriteFile(filename, func(w io.Writer) error {
+			err := fileutils.WriteFile(filename, func(w io.Writer) error {
 				return json.NewEncoder(w).Encode(content)
 			})
 			assert.That(err, p.IsNoError())
@@ -86,7 +86,7 @@ func TestWriteFileIsAtomic(t *testing.T) {
 
 	wg.Wait()
 	content := &Content{}
-	err = fileutil.ReadFile(filename, func(r io.Reader) error {
+	err = fileutils.ReadFile(filename, func(r io.Reader) error {
 		return json.NewDecoder(r).Decode(content)
 	})
 
