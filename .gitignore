@@ -1,4 +1,4 @@
-.vscode
+build
 testdata-*
 **/testdata/output
 **/unarchiver/testdata/content
