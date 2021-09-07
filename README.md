@@ -22,6 +22,9 @@ Package `fileutils` is a collection of filesystem utilities including directory
 traversal with symlinks support, finding file and folders with extended glob
 pattern, filename manipulation and atomic file operations.
 
+> **NOTE:** This package is directly usable on all Unix-like operating systems,
+> and its API is now stable as of v0.5.0 -- Windows support still requires more work.
+
 ## Installation
 
     go get github.com/maargenton/go-fileutils
