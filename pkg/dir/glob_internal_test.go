@@ -4,38 +4,34 @@ import (
 	"regexp"
 	"testing"
 
-	"github.com/maargenton/go-testpredicate/pkg/asserter"
-	"github.com/maargenton/go-testpredicate/pkg/p"
+	"github.com/maargenton/go-testpredicate/pkg/require"
+	"github.com/maargenton/go-testpredicate/pkg/verify"
 )
 
 // ---------------------------------------------------------------------------
 // globFragment.match()
 
 func TestLiteralGlobFragmentMatch(t *testing.T) {
-	assert := asserter.New(t)
-
 	var f = &globFragment{
 		literal: "src",
 	}
-	assert.That(f.match("src"), p.IsTrue(), "fragment", "src")
-	assert.That(f.match("src/"), p.IsTrue(), "fragment", "src/")
-	assert.That(f.match("not-src"), p.IsFalse(), "fragment", "not-src")
-	assert.That(f.match("not-src/"), p.IsFalse(), "fragment", "not-src/")
+	verify.That(t, f.match("src")).IsTrue()
+	verify.That(t, f.match("src/")).IsTrue()
+	verify.That(t, f.match("not-src")).IsFalse()
+	verify.That(t, f.match("not-src/")).IsFalse()
 }
 
 func TestRegexpGlobFragmentMatch(t *testing.T) {
-	assert := asserter.New(t)
-
 	var f = &globFragment{
 		re: regexp.MustCompile(".*src.*"),
 	}
-	assert.That(f.match("src"), p.IsTrue(), "fragment", "src")
-	assert.That(f.match("src/"), p.IsTrue(), "fragment", "src/")
-	assert.That(f.match("not-src"), p.IsTrue(), "fragment", "not-src")
-	assert.That(f.match("not-src/"), p.IsTrue(), "fragment", "not-src/")
+	verify.That(t, f.match("src")).IsTrue()
+	verify.That(t, f.match("src/")).IsTrue()
+	verify.That(t, f.match("not-src")).IsTrue()
+	verify.That(t, f.match("not-src/")).IsTrue()
 
-	assert.That(f.match("dst"), p.IsFalse(), "fragment", "dst")
-	assert.That(f.match("dst/"), p.IsFalse(), "fragment", "dst/")
+	verify.That(t, f.match("dst")).IsFalse()
+	verify.That(t, f.match("dst/")).IsFalse()
 }
 
 // globFragment.match()
@@ -45,34 +41,26 @@ func TestRegexpGlobFragmentMatch(t *testing.T) {
 // globFragment.matchStart()
 
 func TestGlobFragmentMatchStart(t *testing.T) {
-	assert := asserter.New(t)
-	assert.That(nil, p.IsNil())
-
 	var f = &globFragment{
 		literal: "src",
 	}
 
-	assert.That(f.matchStart("src/aaa/bbb"), p.IsEqualSet([]string{"aaa/bbb"}))
-	assert.That(f.matchStart("aaa/src/bbb"), p.IsEqualSet([]string{}))
-
+	verify.That(t, f.matchStart("src/aaa/bbb")).IsEqualSet([]string{"aaa/bbb"})
+	verify.That(t, f.matchStart("aaa/src/bbb")).IsEqualSet([]string{})
 }
 
 func TestSubdirGlobFragmentMatchStart(t *testing.T) {
-	assert := asserter.New(t)
-	assert.That(nil, p.IsNil())
-
 	var f = &globFragment{
 		subdir:  true,
 		literal: "src",
 	}
 
-	assert.That(f.matchStart("src/aaa/bbb"), p.IsEqualSet([]string{"aaa/bbb"}))
-	assert.That(f.matchStart("aaa/src/bbb"), p.IsEqualSet([]string{"bbb"}))
-	assert.That(f.matchStart("aaa/src/bbb/src/ccc/ddd"), p.IsEqualSet([]string{
+	verify.That(t, f.matchStart("src/aaa/bbb")).IsEqualSet([]string{"aaa/bbb"})
+	verify.That(t, f.matchStart("aaa/src/bbb")).IsEqualSet([]string{"bbb"})
+	verify.That(t, f.matchStart("aaa/src/bbb/src/ccc/ddd")).IsEqualSet([]string{
 		"bbb/src/ccc/ddd",
 		"ccc/ddd",
-	}))
-
+	})
 }
 
 // globFragment.matchStart()
@@ -82,30 +70,25 @@ func TestSubdirGlobFragmentMatchStart(t *testing.T) {
 // globFragment.prefixMatchStart()
 
 func TestGlobFragmentPrefixMatchStart(t *testing.T) {
-	assert := asserter.New(t)
-	assert.That(nil, p.IsNil())
-
 	var f = &globFragment{
 		literal: "src",
 	}
 
-	assert.That(f.prefixMatchStart("src/aaa/bbb"), p.Eq([]string{"aaa/bbb"}))
-	assert.That(f.prefixMatchStart("aaa/src/bbb"), p.Eq([]string{}))
+	verify.That(t, f.prefixMatchStart("src/aaa/bbb")).Eq([]string{"aaa/bbb"})
+	verify.That(t, f.prefixMatchStart("aaa/src/bbb")).Eq([]string{})
 
 }
 
 func TestSubdirGlobFragmentPrefixMatchStart(t *testing.T) {
-	assert := asserter.New(t)
-	assert.That(nil, p.IsNil())
-
 	var f = &globFragment{
 		subdir:  true,
 		literal: "src",
 	}
 
-	assert.That(f.prefixMatchStart("src/aaa/bbb"), p.Eq([]string{"", "aaa/bbb"}))
-	assert.That(f.prefixMatchStart("aaa/src/bbb"), p.Eq([]string{"", "bbb"}))
-	assert.That(f.prefixMatchStart("aaa/src/bbb/src/ccc/ddd"), p.Eq([]string{"", "bbb/src/ccc/ddd", "ccc/ddd"}))
+	verify.That(t, f.prefixMatchStart("src/aaa/bbb")).Eq([]string{"", "aaa/bbb"})
+	verify.That(t, f.prefixMatchStart("aaa/src/bbb")).Eq([]string{"", "bbb"})
+	verify.That(t, f.prefixMatchStart("aaa/src/bbb/src/ccc/ddd")).Eq(
+		[]string{"", "bbb/src/ccc/ddd", "ccc/ddd"})
 }
 
 // globFragment.matchStart()
@@ -127,10 +110,9 @@ func TestSplitPath(t *testing.T) {
 
 	for _, tc := range tcs {
 		t.Run(tc.input, func(t *testing.T) {
-			assert := asserter.New(t)
 			a, b := splitPath(tc.input)
-			assert.That(a, p.Eq(tc.fragment))
-			assert.That(b, p.Eq(tc.remainder))
+			verify.That(t, a).Eq(tc.fragment)
+			verify.That(t, b).Eq(tc.remainder)
 		})
 	}
 }
@@ -154,9 +136,7 @@ func TestCleanFragment(t *testing.T) {
 
 	for _, tc := range tcs {
 		t.Run(tc.input, func(t *testing.T) {
-			assert := asserter.New(t)
-			assert.That(cleanFragment(tc.input), p.Eq(tc.output))
-
+			verify.That(t, cleanFragment(tc.input)).Eq(tc.output)
 		})
 	}
 }
@@ -187,29 +167,23 @@ func TestGlobFragmentToRegexp(t *testing.T) {
 
 	for _, tc := range tcs {
 		t.Run(tc.input, func(t *testing.T) {
-			assert := asserter.New(t, asserter.AbortOnError())
-			assert.That(true, p.IsTrue())
-
 			re, err := globFragmentToRegexp(tc.input)
-			assert.That(err, p.IsNoError())
-			assert.That(re, p.IsNotNil())
-			assert.That(re.String(), p.Eq(tc.re))
-			assert.That(
-				re.MatchString(tc.match), p.IsTrue(),
-				"re", re.String(), "match", tc.match,
-			)
+			require.That(t, err).IsNil()
+			require.That(t, re).IsNotNil()
+			require.That(t, re.String()).Eq(tc.re)
+			require.That(t, re.MatchString(tc.match),
+				require.Context{Name: "re", Value: re.String()},
+				require.Context{Name: "match", Value: tc.match},
+			).IsTrue()
 		})
 	}
 }
 
 func TestGlobFragmentToRegexpError(t *testing.T) {
-	assert := asserter.New(t)
-	assert.That(nil, p.IsNil())
-
 	var pattern = `*.{a,b`
 	re, err := globFragmentToRegexp(pattern)
-	assert.That(err, p.IsNotNil())
-	assert.That(re, p.IsNil())
+	verify.That(t, err).IsNotNil()
+	verify.That(t, re).IsNil()
 }
 
 // globFragmentToRegexp()

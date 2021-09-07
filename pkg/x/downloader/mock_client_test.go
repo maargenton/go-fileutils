@@ -7,8 +7,8 @@ import (
 	"os"
 	"strings"
 
-	"github.com/maargenton/fileutil/downloader"
 	"github.com/maargenton/go-errors"
+	"github.com/maargenton/go-fileutils/pkg/x/downloader"
 )
 
 const mockError = errors.Sentinel("mockError")

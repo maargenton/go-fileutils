@@ -1,44 +1,137 @@
-package fileutil_test
+package fileutils_test
 
 import (
+	"fmt"
 	"os"
 	"path/filepath"
 	"testing"
 
-	"github.com/maargenton/fileutil"
-	"github.com/maargenton/go-testpredicate/pkg/asserter"
-	"github.com/maargenton/go-testpredicate/pkg/p"
+	"github.com/maargenton/go-testpredicate/pkg/require"
+
+	"github.com/maargenton/go-fileutils"
 )
+
+// ---------------------------------------------------------------------------
+// fileutils.Clean
+
+func TestClean(t *testing.T) {
+	var tcs = []struct {
+		input, output string
+	}{
+		{"/", "/"},
+		{"//", "/"},
+		{"/dev/", "/dev/"},
+		{"./abc/", "abc/"},
+		{"./abc//def", "abc/def"},
+		{"aaa/..", "./"},
+		{"aaa/../", "./"},
+		{"aaa/.", "aaa/"},
+		{"aaa/./", "aaa/"},
+		{".", "./"},
+		{"./", "./"},
+		{"", "./"},
+	}
+
+	for _, tc := range tcs {
+		t.Run(fmt.Sprintf("Given %v", tc.input), func(t *testing.T) {
+			t.Run("when calling Clean", func(t *testing.T) {
+				output := fileutils.Clean(tc.input)
+				t.Run("then output match expected", func(t *testing.T) {
+					require.That(t, output).Eq(tc.output)
+				})
+			})
+		})
+	}
+}
+
+// fileutils.Clean
+// ---------------------------------------------------------------------------
+
+// ---------------------------------------------------------------------------
+// fileutils.Rel
+func TestRel(t *testing.T) {
+	var tcs = []struct {
+		basepath, targetpath, output string
+	}{
+		{"testdata", "testdata/src", "src"},
+		{"testdata/", "testdata/src", "src"},
+		{"testdata/", "testdata/src/", "src/"},
+		{"/", "/testdata/src/", "testdata/src/"},
+		{"/testdata", "/testdata/src/", "src/"},
+	}
+
+	for _, tc := range tcs {
+		t.Run(fmt.Sprintf("Given %v + %v", tc.basepath, tc.targetpath), func(t *testing.T) {
+			t.Run("when calling Clean", func(t *testing.T) {
+				output, err := fileutils.Rel(tc.basepath, tc.targetpath)
+				require.That(t, err).IsNil()
+				t.Run("then output match expected", func(t *testing.T) {
+					require.That(t, output).Eq(tc.output)
+				})
+			})
+		})
+	}
+}
+
+// fileutils.Rel
+// ---------------------------------------------------------------------------
+
+// ---------------------------------------------------------------------------
+// fileutils.Join
+
+func TestJoin(t *testing.T) {
+	var tcs = []struct {
+		input  []string
+		output string
+	}{
+		{[]string{"aaa/bbb", "ccc"}, "aaa/bbb/ccc"},
+		{[]string{"aaa/bbb/", "ccc"}, "aaa/bbb/ccc"},
+		{[]string{"aaa/bbb/", "ccc/"}, "aaa/bbb/ccc/"},
+		{[]string{"", ""}, "./"},
+		{[]string{"aaa/bbb", ""}, "aaa/bbb/"},
+		{[]string{"aaa/bbb", "../ccc", "../ddd"}, "aaa/ddd"},
+		{[]string{"/dev", "tty.usbserial-1240"}, "/dev/tty.usbserial-1240"},
+		{[]string{".", "/dev", "tty.usbserial-1240"}, "/dev/tty.usbserial-1240"},
+	}
+
+	for _, tc := range tcs {
+		t.Run(fmt.Sprintf("Given %v", tc.input), func(t *testing.T) {
+			t.Run("when calling Join", func(t *testing.T) {
+				output := fileutils.Join(tc.input...)
+				t.Run("then output match expected", func(t *testing.T) {
+					require.That(t, output).Eq(tc.output)
+				})
+			})
+		})
+	}
+}
+
+// fileutils.Join
+// ---------------------------------------------------------------------------
 
 // ---------------------------------------------------------------------------
 // RewriteFilename
 
 func TestRewriteFilenameFull(t *testing.T) {
-	assert := asserter.New(t)
-	assert.That(nil, p.IsNil())
-
 	var input = "path/to/file.txt"
-	var output = fileutil.RewriteFilename(input, &fileutil.RewriteOpts{
-		Dirname: "other/path/to",
+	var output = fileutils.RewriteFilename(input, &fileutils.RewriteOpts{
+		Dirname: "other/path/to/",
 		Prefix:  "prefix-",
 		Suffix:  "-suffix",
 		Extname: ".csv",
 	})
-	assert.That(output, p.Eq("other/path/to/prefix-file-suffix.csv"))
+	require.That(t, output).Eq("other/path/to/prefix-file-suffix.csv")
 }
 
 func TestRewriteFilenameNoDotExt(t *testing.T) {
-	assert := asserter.New(t)
-	assert.That(nil, p.IsNil())
-
 	var input = "path/to/file.txt"
-	var output = fileutil.RewriteFilename(input, &fileutil.RewriteOpts{
+	var output = fileutils.RewriteFilename(input, &fileutils.RewriteOpts{
 		Dirname: "other/path/to",
 		Prefix:  "prefix-",
 		Suffix:  "-suffix",
 		Extname: "csv",
 	})
-	assert.That(output, p.Eq("other/path/to/prefix-file-suffix.csv"))
+	require.That(t, output).Eq("other/path/to/prefix-file-suffix.csv")
 }
 
 // RewriteFilename
@@ -78,11 +171,9 @@ func TestExpandPath(t *testing.T) {
 
 	for _, tc := range tcs {
 		t.Run(tc.input, func(t *testing.T) {
-			assert := asserter.New(t)
-
-			output, err := fileutil.ExpandPath(tc.input)
-			assert.That(err, p.IsNoError())
-			assert.That(output, p.Eq(tc.output))
+			output, err := fileutils.ExpandPath(tc.input)
+			require.That(t, err).IsNil()
+			require.That(t, output).Eq(tc.output)
 		})
 	}
 }
@@ -97,13 +188,11 @@ func TestExpandPathFromHome(t *testing.T) {
 	var home, _ = os.UserHomeDir()
 	for _, tc := range tcs {
 		t.Run(tc.input, func(t *testing.T) {
-			assert := asserter.New(t)
-
-			output, err := fileutil.ExpandPath(tc.input)
+			output, err := fileutils.ExpandPath(tc.input)
 			expected := filepath.Join(home, tc.output)
 
-			assert.That(err, p.IsNoError())
-			assert.That(output, p.Eq(expected))
+			require.That(t, err).IsNil()
+			require.That(t, output).Eq(expected)
 		})
 	}
 }
@@ -117,13 +206,11 @@ func TestExpandPathFromPwd(t *testing.T) {
 	var pwd, _ = os.Getwd()
 	for _, tc := range tcs {
 		t.Run(tc.input, func(t *testing.T) {
-			assert := asserter.New(t)
-
-			output, err := fileutil.ExpandPath(tc.input)
+			output, err := fileutils.ExpandPath(tc.input)
 			expected := filepath.Join(pwd, tc.output)
 
-			assert.That(err, p.IsNoError())
-			assert.That(output, p.Eq(expected))
+			require.That(t, err).IsNil()
+			require.That(t, output).Eq(expected)
 		})
 	}
 }
@@ -144,13 +231,11 @@ func TestExpandPathRelative(t *testing.T) {
 	// var pwd, _ = os.Getwd()
 	for _, tc := range tcs {
 		t.Run(tc.input, func(t *testing.T) {
-			assert := asserter.New(t)
-
-			output, err := fileutil.ExpandPathRelative(tc.input, tc.basepath)
+			output, err := fileutils.ExpandPathRelative(tc.input, tc.basepath)
 			expected := tc.output //filepath.Join(pwd, tc.output)
 
-			assert.That(err, p.IsNoError())
-			assert.That(output, p.Eq(expected))
+			require.That(t, err).IsNil()
+			require.That(t, output).Eq(expected)
 		})
 	}
 }
@@ -164,13 +249,11 @@ func TestExpandPathRelativeFromPwd(t *testing.T) {
 	var pwd, _ = os.Getwd()
 	for _, tc := range tcs {
 		t.Run(tc.input, func(t *testing.T) {
-			assert := asserter.New(t)
-
-			output, err := fileutil.ExpandPathRelative(tc.input, tc.basepath)
+			output, err := fileutils.ExpandPathRelative(tc.input, tc.basepath)
 			expected := filepath.Join(pwd, tc.output)
 
-			assert.That(err, p.IsNoError())
-			assert.That(output, p.Eq(expected))
+			require.That(t, err).IsNil()
+			require.That(t, output).Eq(expected)
 		})
 	}
 }

@@ -31,8 +31,8 @@ import (
 	"path/filepath"
 	"sync"
 
-	"github.com/maargenton/fileutil"
 	"github.com/maargenton/go-errors"
+	"github.com/maargenton/go-fileutils"
 )
 
 // Client captures the settings common to multiple request
@@ -95,7 +95,7 @@ func (c *Client) Get(ctx context.Context, r *Request) error {
 
 	// Handle case where the final file is already there and no download is
 	// necessary
-	if fileutil.IsFile(r.OutputFilename) {
+	if fileutils.IsFile(r.OutputFilename) {
 		if r.ContentReader != nil {
 			// TODO: stream content to ContentReader, update progress along the
 			// way
@@ -110,7 +110,7 @@ func (c *Client) Get(ctx context.Context, r *Request) error {
 	var filename = r.OutputFilename + downloadSuffix
 	var hashPrimeWG sync.WaitGroup
 	var hashPrimeError error
-	if fileutil.Exists(filename) && len(r.Checksum) != 0 && r.Hash != nil {
+	if fileutils.Exists(filename) && len(r.Checksum) != 0 && r.Hash != nil {
 		hashPrimeWG.Add(1)
 		go func() {
 			defer hashPrimeWG.Done()
@@ -204,7 +204,7 @@ func (c *Client) expandOutputPath(r *Request) error {
 
 		// OutputFilename has a path component, expand relative to current
 		// directory
-		r.OutputFilename, err = fileutil.ExpandPath(r.OutputFilename)
+		r.OutputFilename, err = fileutils.ExpandPath(r.OutputFilename)
 		if err != nil {
 			return ErrLocalFileError.Errorf(
 				"failed to expand output filename '%v', %w",
@@ -221,7 +221,7 @@ func (c *Client) expandOutputPath(r *Request) error {
 		if r.OutputDirectory == "" {
 			r.OutputDirectory = "."
 		}
-		r.OutputDirectory, err = fileutil.ExpandPath(r.OutputDirectory)
+		r.OutputDirectory, err = fileutils.ExpandPath(r.OutputDirectory)
 		if err != nil {
 			return ErrLocalFileError.Errorf(
 				"failed to expand output directory '%v', %w", r.OutputDirectory, err)
@@ -318,7 +318,7 @@ func (d *downloader) resume() error {
 	}
 	defer f.Close()
 
-	var w = fileutil.WriterFunc(func(p []byte) (n int, err error) {
+	var w = fileutils.WriterFunc(func(p []byte) (n int, err error) {
 		n, err = f.Write(p)
 		d.currentSize += uint64(n)
 

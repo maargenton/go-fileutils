@@ -1,55 +1,69 @@
-# fileutil
+# go-fileutils
 
-Go filesystem utilities
+A collection of filesystem utilities for Go
 
-[![GoDoc](
-  https://godoc.org/github.com/maargenton/fileutil?status.svg)](
-  https://godoc.org/github.com/maargenton/fileutil)
-[![Build Status](
-  https://travis-ci.org/maargenton/fileutil.svg?branch=master)](
-  https://travis-ci.org/maargenton/fileutil)
-[![codecov](
-  https://codecov.io/gh/maargenton/fileutil/branch/master/graph/badge.svg)](
-  https://codecov.io/gh/maargenton/fileutil)
+[![Latest](
+  https://img.shields.io/github/v/tag/maargenton/go-fileutils?color=blue&label=latest&logo=go&logoColor=white&sort=semver)](
+  https://pkg.go.dev/github.com/maargenton/go-fileutils)
+[![Build](
+  https://img.shields.io/github/workflow/status/maargenton/go-fileutils/build?label=build&logo=github&logoColor=aaaaaa)](
+  https://github.com/maargenton/go-fileutils/actions?query=branch%3Amaster)
+[![Codecov](
+  https://img.shields.io/codecov/c/github/maargenton/go-fileutils?label=codecov&logo=codecov&logoColor=aaaaaa&token=fVZ3ZMAgfo)](
+  https://codecov.io/gh/maargenton/go-fileutils)
 [![Go Report Card](
-  https://goreportcard.com/badge/github.com/maargenton/fileutil)](
-  https://goreportcard.com/report/github.com/maargenton/fileutil)
+  https://goreportcard.com/badge/github.com/maargenton/go-fileutils)](
+  https://goreportcard.com/report/github.com/maargenton/go-fileutils)
 
 
-Package `fileutil` is a small collection of utility functions to interact with
-the filesystem. The functions provided are slightly higher level than those
-provided by the `filepath` package.
+---------------------------
+
+Package `fileutils` is a collection of filesystem utilities including directory
+traversal with symlinks support, finding file and folders with extended glob
+pattern, filename manipulation and atomic file operations.
+
+> **NOTE:** This package is directly usable on all Unix-like operating systems,
+> and its API is now stable as of v0.5.0 -- Windows support still requires more
+> work.
 
 ## Installation
 
-    go get github.com/maargenton/fileutil
+    go get github.com/maargenton/go-fileutils
 
 ## Key features
 
 ### Atomic file operations
 
-- `fileutil.Write()` atomically creates or replaces the destination file with
+- `fileutils.Write()` atomically creates or replaces the destination file with
   the content written into the io.Writer passed to the closure. This guaranties
   that readers of that file will never see an incomplete or partially updated
   content.
-- `fileutil.Read()` reads the content of a file through the io.Reader passed to
+- `fileutils.Read()` reads the content of a file through the io.Reader passed to
   the closure.
-- `fileutil.OpenTemp()` creates and opens a temporary file, in the same location
+- `fileutils.OpenTemp()` creates and opens a temporary file, in the same location
   and with the same extension as the target file. The resulting file is
   guarantied to not previously exists, and therefore never steps onto another
   file.
 
 ### Filename manipulation
 
-- `fileutil.RewriteFilename()` is a single function that lets you transform a
+- `fileutils.RewriteFilename()` is a single function that lets you transform a
   filename in many common ways, like replacing either the extension or the
   containing directory, or inserting a prefix or suffix onto the basename of the
   file.
-- `fileutil.ExpandPath()` and `fileutil.ExpandPathRelative()` expand an relative
+- `fileutils.ExpandPath()` and `fileutils.ExpandPathRelative()` expand an relative
   or absolute path into an absolute path, handling `~/` and environment variable
   expansion, using ether `$(pwd)` or a given `basepath` as base path.
+- `fileutils.Clean()`, `fileutils.Rel()` and `fileutils.Join()` are equivalent to
+  their `filepath` counterpart, but preserve any trailing path separator,
+  commonly used to indicate a directory. In addition, `fileutils.Join()` properly
+  handles the case where one of the elements is an absolute path, resulting in
+  an absolute path with all preceding elements ignored.
 
 ### Filesystem scanning and globing
+
+`fileutils.WalkDir()` implements an enhanced version of `filepath.WalkDir()` that
+follows symlinks safely and adds some flexibility in the way paths are reported.
 
 `dir.Glob()` and `dir.Scan()` are convenient functions to locate and
 enumerate files matching a particular pattern. The pattern is specified as an

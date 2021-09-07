@@ -1,28 +1,24 @@
-package fileutil_test
+package fileutils_test
 
 import (
 	"os"
 	"testing"
 
-	"github.com/maargenton/fileutil"
-	"github.com/maargenton/go-testpredicate/pkg/asserter"
-	"github.com/maargenton/go-testpredicate/pkg/p"
+	"github.com/maargenton/go-testpredicate/pkg/verify"
+
+	"github.com/maargenton/go-fileutils"
 )
 
 func TestExistsFunctionsWithFile(t *testing.T) {
-	assert := asserter.New(t)
-
 	filename := "exist_test.go"
-	assert.That(fileutil.Exists(filename), p.IsTrue())
-	assert.That(fileutil.IsFile(filename), p.IsTrue())
-	assert.That(fileutil.IsDir(filename), p.IsFalse())
+	verify.That(t, fileutils.Exists(filename)).IsTrue()
+	verify.That(t, fileutils.IsFile(filename)).IsTrue()
+	verify.That(t, fileutils.IsDir(filename)).IsFalse()
 }
 
 func TestExistsFunctionsWithDir(t *testing.T) {
-	assert := asserter.New(t)
-
 	path, _ := os.Getwd()
-	assert.That(fileutil.Exists(path), p.IsTrue())
-	assert.That(fileutil.IsFile(path), p.IsFalse())
-	assert.That(fileutil.IsDir(path), p.IsTrue())
+	verify.That(t, fileutils.Exists(path)).IsTrue()
+	verify.That(t, fileutils.IsFile(path)).IsFalse()
+	verify.That(t, fileutils.IsDir(path)).IsTrue()
 }

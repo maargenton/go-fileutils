@@ -8,11 +8,12 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/maargenton/fileutil"
-	"github.com/maargenton/fileutil/unarchiver"
+	"github.com/maargenton/go-fileutils"
 	"github.com/maargenton/go-testpredicate/pkg/asserter"
 	"github.com/maargenton/go-testpredicate/pkg/p"
 	"github.com/pmezard/go-difflib/difflib"
+
+	"github.com/maargenton/go-fileutils/pkg/x/unarchiver"
 )
 
 func printItem(w io.Writer, item unarchiver.ArchiveItem) {
@@ -25,7 +26,7 @@ func printItem(w io.Writer, item unarchiver.ArchiveItem) {
 
 func listArchiveContent(filename string) (string, error) {
 	var content strings.Builder
-	var err = fileutil.ReadFile(filename, func(r io.Reader) error {
+	var err = fileutils.ReadFile(filename, func(r io.Reader) error {
 		u, err := unarchiver.New(r)
 		if err != nil {
 			return err
@@ -48,7 +49,7 @@ func listArchiveContent(filename string) (string, error) {
 
 func loadGolden(filename string) string {
 	var s strings.Builder
-	fileutil.ReadFile(filename, func(r io.Reader) error {
+	fileutils.ReadFile(filename, func(r io.Reader) error {
 		io.Copy(&s, r)
 		return nil
 	})
@@ -75,7 +76,7 @@ func TestTarUnarchiver(t *testing.T) {
 			content, err := listArchiveContent(tc.archive)
 			assert.That(err, p.IsNoError())
 
-			fileutil.WriteFile(tc.content, func(w io.Writer) error {
+			fileutils.WriteFile(tc.content, func(w io.Writer) error {
 				_, err := fmt.Fprint(w, content)
 				return err
 			})
@@ -101,7 +102,7 @@ func TestZipUnarchiver(t *testing.T) {
 	assert := asserter.New(t)
 	assert.That(nil, p.IsNil())
 
-	var err = fileutil.ReadFile("testdata/content.zip", func(r io.Reader) error {
+	var err = fileutils.ReadFile("testdata/content.zip", func(r io.Reader) error {
 		u, err := unarchiver.New(r)
 		if err != nil {
 			return err

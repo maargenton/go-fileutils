@@ -1,4 +1,4 @@
-package fileutil_test
+package fileutils_test
 
 import (
 	"encoding/json"
@@ -9,27 +9,27 @@ import (
 	"sync"
 	"testing"
 
-	"github.com/maargenton/fileutil"
-	"github.com/maargenton/go-testpredicate/pkg/asserter"
-	"github.com/maargenton/go-testpredicate/pkg/p"
+	"github.com/maargenton/go-testpredicate/pkg/require"
+	"github.com/maargenton/go-testpredicate/pkg/verify"
+
+	"github.com/maargenton/go-fileutils"
 )
 
 func TestOpenTemp(t *testing.T) {
-	assert := asserter.New(t, asserter.AbortOnError())
 	dir, err := ioutil.TempDir(".", "testdata-")
-	assert.That(err, p.IsNoError())
+	require.That(t, err).IsNil()
 	defer os.RemoveAll(dir) // clean up
 
 	filename := filepath.Join(dir, "file.txt")
-	f, err := fileutil.OpenTemp(filename, "tmp")
+	f, err := fileutils.OpenTemp(filename, "tmp")
 	if f != nil {
 		defer os.Remove(f.Name())
 	}
 	defer f.Close()
 
-	assert.That(err, p.IsNoError())
-	assert.That(f, p.IsNotNil())
-	assert.That(f.Name(), p.StartsWith(filepath.Join(dir, "file")))
+	require.That(t, err).IsNil()
+	require.That(t, f).IsNotNil()
+	require.That(t, f.Name()).StartsWith(filepath.Join(dir, "file"))
 }
 
 // ---------------------------------------------------------------------------
@@ -39,33 +39,31 @@ type Content struct {
 }
 
 func TestReadWriteFile(t *testing.T) {
-	assert := asserter.New(t)
 	dir, err := ioutil.TempDir(".", "testdata-")
-	assert.That(err, p.IsNoError())
+	verify.That(t, err).IsNil()
 	defer os.RemoveAll(dir) // clean up
 
 	// Write file
 	var content = &Content{Seq: 125}
 	filename := filepath.Join(dir, "file.txt")
-	err = fileutil.WriteFile(filename, func(w io.Writer) error {
+	err = fileutils.WriteFile(filename, func(w io.Writer) error {
 		return json.NewEncoder(w).Encode(content)
 	})
-	assert.That(err, p.IsNoError())
+	verify.That(t, err).IsNil()
 
 	// Read file
 	content = &Content{}
-	err = fileutil.ReadFile(filename, func(r io.Reader) error {
+	err = fileutils.ReadFile(filename, func(r io.Reader) error {
 		return json.NewDecoder(r).Decode(content)
 	})
 
-	assert.That(err, p.IsNoError())
-	assert.That(content.Seq, p.Eq(125))
+	verify.That(t, err).IsNil()
+	verify.That(t, content.Seq).Eq(125)
 }
 
 func TestWriteFileIsAtomic(t *testing.T) {
-	assert := asserter.New(t)
 	dir, err := ioutil.TempDir(".", "testdata-")
-	assert.That(err, p.IsNoError())
+	verify.That(t, err).IsNil()
 	defer os.RemoveAll(dir) // clean up
 
 	filename := filepath.Join(dir, "file.txt")
@@ -76,21 +74,21 @@ func TestWriteFileIsAtomic(t *testing.T) {
 
 		go func() {
 			content := &Content{Seq: i}
-			err := fileutil.WriteFile(filename, func(w io.Writer) error {
+			err := fileutils.WriteFile(filename, func(w io.Writer) error {
 				return json.NewEncoder(w).Encode(content)
 			})
-			assert.That(err, p.IsNoError())
+			verify.That(t, err).IsNil()
 			wg.Done()
 		}()
 	}
 
 	wg.Wait()
 	content := &Content{}
-	err = fileutil.ReadFile(filename, func(r io.Reader) error {
+	err = fileutils.ReadFile(filename, func(r io.Reader) error {
 		return json.NewDecoder(r).Decode(content)
 	})
 
-	assert.That(err, p.IsNoError())
-	assert.That(content.Seq, p.Ge(0))
-	assert.That(content.Seq, p.Lt(10))
+	verify.That(t, err).IsNil()
+	verify.That(t, content.Seq).Ge(0)
+	verify.That(t, content.Seq).Lt(10)
 }
