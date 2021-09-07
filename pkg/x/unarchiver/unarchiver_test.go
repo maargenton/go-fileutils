@@ -8,11 +8,10 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/maargenton/go-fileutils"
-	"github.com/maargenton/go-testpredicate/pkg/asserter"
-	"github.com/maargenton/go-testpredicate/pkg/p"
+	"github.com/maargenton/go-testpredicate/pkg/verify"
 	"github.com/pmezard/go-difflib/difflib"
 
+	"github.com/maargenton/go-fileutils"
 	"github.com/maargenton/go-fileutils/pkg/x/unarchiver"
 )
 
@@ -71,10 +70,8 @@ func TestTarUnarchiver(t *testing.T) {
 
 	for _, tc := range tcs {
 		t.Run(tc.archive, func(t *testing.T) {
-			assert := asserter.New(t)
-
 			content, err := listArchiveContent(tc.archive)
-			assert.That(err, p.IsNoError())
+			verify.That(t, err).IsNil()
 
 			fileutils.WriteFile(tc.content, func(w io.Writer) error {
 				_, err := fmt.Fprint(w, content)
@@ -99,9 +96,6 @@ func TestTarUnarchiver(t *testing.T) {
 }
 
 func TestZipUnarchiver(t *testing.T) {
-	assert := asserter.New(t)
-	assert.That(nil, p.IsNil())
-
 	var err = fileutils.ReadFile("testdata/content.zip", func(r io.Reader) error {
 		u, err := unarchiver.New(r)
 		if err != nil {
@@ -121,6 +115,6 @@ func TestZipUnarchiver(t *testing.T) {
 		return nil
 	})
 
-	assert.That(err, p.IsNoError())
-	// t.Fail()
+	verify.That(t, err).IsNil()
+
 }
