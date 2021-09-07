@@ -5,13 +5,12 @@ import (
 	"strings"
 	"testing"
 
+	"github.com/maargenton/go-testpredicate/pkg/verify"
+
 	"github.com/maargenton/go-fileutils"
-	"github.com/maargenton/go-testpredicate/pkg/asserter"
-	"github.com/maargenton/go-testpredicate/pkg/p"
 )
 
 func TestReaderFunc(t *testing.T) {
-	assert := asserter.New(t)
 
 	var s = "Hello wonderful world of reader / writer func!"
 	var rr = strings.NewReader(s)
@@ -24,7 +23,7 @@ func TestReaderFunc(t *testing.T) {
 		return ww.Write(p)
 	})
 	n, err := io.Copy(w, r)
-	assert.That(err, p.IsNoError())
-	assert.That(n, p.Eq(len(s)))
-	assert.That(ww.String(), p.Eq(s))
+	verify.That(t, err).IsNil()
+	verify.That(t, n).Eq(len(s))
+	verify.That(t, ww.String()).Eq(s)
 }

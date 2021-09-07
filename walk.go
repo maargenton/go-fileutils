@@ -14,8 +14,8 @@ import (
 // the target path is a symlink that has already been visited.
 var ErrRecursiveSymlink = errors.Sentinel("ErrRecursiveSymlink")
 
-// WalkDir is similar to `filepath.WalkDir()`, but it follows symlinks and takes
-// an additional `prefix` argument. The walk starts at '<prefix>/<root>' and the
+// Walk is similar to `filepath.WalkDir()`, but it follows symlinks and takes an
+// additional `prefix` argument. The walk starts at '<prefix>/<root>' and the
 // paths are reported relative to `prefix`; the starting path is always recursed
 // into, but never reported unless an error occurs during filesystem operation.
 // Either or both of `prefix` and `root` can be empty, a relative path or an
@@ -29,12 +29,12 @@ var ErrRecursiveSymlink = errors.Sentinel("ErrRecursiveSymlink")
 // the client. If the symlink points back to a folder along the current path,
 // the client is called with ErrRecursiveSymlink and the link evaluation stops
 // there.
-func WalkDir(prefix, root string, fn fs.WalkDirFunc) error {
+func Walk(prefix, root string, fn fs.WalkDirFunc) error {
 	visited := make([]string, 0, 16)
-	return walkDir(prefix, root, makeSymlinkWalkFunc(visited, prefix, "", fn))
+	return walk(prefix, root, makeSymlinkWalkFunc(visited, prefix, "", fn))
 }
 
-func walkDir(prefix, root string, fn fs.WalkDirFunc) error {
+func walk(prefix, root string, fn fs.WalkDirFunc) error {
 	walkRoot := Join(prefix, root)
 	if filepath.IsAbs(root) {
 		walkRoot = Clean(root)
@@ -120,7 +120,7 @@ func makeSymlinkWalkFunc(visited []string, basepath, clientPrefix string, client
 		}
 
 		visited := append(visited, realpath)
-		return walkDir(realpath, "",
+		return walk(realpath, "",
 			makeSymlinkWalkFunc(visited, realpath, path, clientFn))
 	}
 	return f

@@ -7,17 +7,18 @@ import (
 	"path/filepath"
 	"testing"
 
-	"github.com/maargenton/go-fileutils"
 	"github.com/maargenton/go-testpredicate/pkg/require"
 	"github.com/maargenton/go-testpredicate/pkg/subexpr"
 	"github.com/maargenton/go-testpredicate/pkg/verify"
+
+	"github.com/maargenton/go-fileutils"
 )
 
-func TestWalkDirWithPrefix(t *testing.T) {
+func TestWalkWithPrefix(t *testing.T) {
 	var records []string
 	var f = makeWalkDirPathRecorder(&records, nil)
 
-	err := fileutils.WalkDir("testdata", "", f)
+	err := fileutils.Walk("testdata", "", f)
 	verify.That(t, err).IsError(nil)
 
 	verify.That(t, records).IsEqualSet([]string{
@@ -27,11 +28,11 @@ func TestWalkDirWithPrefix(t *testing.T) {
 	})
 }
 
-func TestWalkDirWithRoot(t *testing.T) {
+func TestWalkWithRoot(t *testing.T) {
 	var records []string
 	var f = makeWalkDirPathRecorder(&records, nil)
 
-	err := fileutils.WalkDir("", "testdata", f)
+	err := fileutils.Walk("", "testdata", f)
 	verify.That(t, err).IsError(nil)
 	verify.That(t, records).IsEqualSet([]string{
 		"testdata/src/",
@@ -40,11 +41,11 @@ func TestWalkDirWithRoot(t *testing.T) {
 	})
 }
 
-func TestWalkDirWithNoRootNoPrefix(t *testing.T) {
+func TestWalkWithNoRootNoPrefix(t *testing.T) {
 	var records []string
 	var f = makeWalkDirPathRecorder(&records, nil)
 
-	err := fileutils.WalkDir("", "", f)
+	err := fileutils.Walk("", "", f)
 	verify.That(t, err).IsError(nil)
 	verify.That(t, records).IsSupersetOf([]string{
 		"testdata/",
@@ -57,11 +58,11 @@ func TestWalkDirWithNoRootNoPrefix(t *testing.T) {
 	})
 }
 
-func TestWalkDirFromFsRoot(t *testing.T) {
+func TestWalkFromFsRoot(t *testing.T) {
 	var records []string
 	var f = makeWalkDirPathRecorder(&records, skipDirFunc)
 
-	err := fileutils.WalkDir("", "/", f)
+	err := fileutils.Walk("", "/", f)
 	verify.That(t, err).IsError(nil)
 	verify.That(t, records).IsSupersetOf([]string{
 		"/bin/",
@@ -83,7 +84,7 @@ func TestSymlinks(t *testing.T) {
 	var records []string
 	var f = makeWalkDirPathRecorder(&records, nil)
 
-	err = fileutils.WalkDir(basepath, "", f)
+	err = fileutils.Walk(basepath, "", f)
 	verify.That(t, err).IsNil()
 	verify.That(t, records).Any(subexpr.Value().StartsWith("src/foo/"))
 	verify.That(t, records).Any(subexpr.Value().StartsWith("src/bar/"))
@@ -101,7 +102,7 @@ func TestSymlinksRecursion(t *testing.T) {
 	var records []walkErrorRecord
 	var f = makeWalkDirErrorRecorder(&records, nil)
 
-	err = fileutils.WalkDir(basepath, "", f)
+	err = fileutils.Walk(basepath, "", f)
 	verify.That(t, err).IsNil()
 	verify.That(t, records).Field("Err").All(
 		subexpr.Value().IsError(fileutils.ErrRecursiveSymlink),
@@ -121,7 +122,7 @@ func TestSymlinksBroken(t *testing.T) {
 	var records []walkErrorRecord
 	var f = makeWalkDirErrorRecorder(&records, nil)
 
-	err = fileutils.WalkDir(basepath, "", f)
+	err = fileutils.Walk(basepath, "", f)
 	verify.That(t, err).IsNil()
 	verify.That(t, records).Field("Path").IsEqualSet([]string{
 		"src/src3",

@@ -6,20 +6,19 @@ import (
 	"path/filepath"
 	"testing"
 
+	"github.com/maargenton/go-testpredicate/pkg/require"
+	"github.com/maargenton/go-testpredicate/pkg/verify"
+
 	"github.com/maargenton/go-fileutils"
-	"github.com/maargenton/go-testpredicate/pkg/asserter"
-	"github.com/maargenton/go-testpredicate/pkg/p"
 )
 
 func TestTouchCreatesTargetFile(t *testing.T) {
-	assert := asserter.New(t)
-
 	basepath, err := ioutil.TempDir(".", "testdata-")
-	assert.That(err, p.IsNoError())
+	require.That(t, err).IsNil()
 	defer os.RemoveAll(basepath) // clean up
 
 	path := filepath.Join(basepath, "file.txt")
 	err = fileutils.Touch(path)
-	assert.That(err, p.IsNoError())
-	assert.That(fileutils.Exists(path), p.IsTrue())
+	verify.That(t, err).IsNil()
+	verify.That(t, fileutils.Exists(path)).IsTrue()
 }

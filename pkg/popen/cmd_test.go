@@ -12,19 +12,16 @@ import (
 	"strings"
 	"testing"
 
+	"github.com/maargenton/go-testpredicate/pkg/verify"
+
 	"github.com/maargenton/go-fileutils"
 	"github.com/maargenton/go-fileutils/pkg/popen"
-
-	"github.com/maargenton/go-testpredicate/pkg/asserter"
-	"github.com/maargenton/go-testpredicate/pkg/p"
 )
 
 // ---------------------------------------------------------------------------
 // Directory and environment
 
 func TestCommandDirectory(t *testing.T) {
-	assert := asserter.New(t)
-
 	var tmp = tempDir(t)
 	var dir = filepath.Join(tmp, "a", "b", "c")
 	os.MkdirAll(dir, 0777)
@@ -35,13 +32,11 @@ func TestCommandDirectory(t *testing.T) {
 	}
 
 	stdout, _, err := cmd.Run(context.Background())
-	assert.That(err, p.IsNoError())
-	assert.That(stdout, p.StartsWith(dir)) // Ignore trailing LF
+	verify.That(t, err).IsNil()
+	verify.That(t, stdout).StartsWith(dir) // Ignore trailing LF
 }
 
 func TestCommandEnv(t *testing.T) {
-	assert := asserter.New(t)
-
 	var cmd = popen.Command{
 		Command: "env",
 		Env: []string{
@@ -50,14 +45,13 @@ func TestCommandEnv(t *testing.T) {
 		},
 	}
 	stdout, _, err := cmd.Run(context.Background())
-	assert.That(err, p.IsNoError())
+	verify.That(t, err).IsNil()
 	var env = parseEnv(stdout)
 
-	assert.That(env, p.MapKeys(p.IsSupersetOf([]string{"PATH", "aaa", "ccc"})))
+	verify.That(t, env).MapKeys().IsSupersetOf([]string{"PATH", "aaa", "ccc"})
 }
 
 func TestCommandEnvOverride(t *testing.T) {
-	assert := asserter.New(t)
 
 	var cmd = popen.Command{
 		Command: "env",
@@ -68,11 +62,11 @@ func TestCommandEnvOverride(t *testing.T) {
 		OverwriteEnv: true,
 	}
 	stdout, _, err := cmd.Run(context.Background())
-	assert.That(err, p.IsNoError())
+	verify.That(t, err).IsNil()
 	var env = parseEnv(stdout)
 
-	assert.That(env, p.MapKeys(p.IsSupersetOf([]string{"aaa", "ccc"})))
-	assert.That(env, p.MapKeys(p.IsDisjointSetFrom([]string{"PATH"})))
+	verify.That(t, env).MapKeys().IsSupersetOf([]string{"aaa", "ccc"})
+	verify.That(t, env).MapKeys().IsDisjointSetFrom([]string{"PATH"})
 }
 
 // Directory and environment
@@ -82,7 +76,6 @@ func TestCommandEnvOverride(t *testing.T) {
 // Stdout
 
 func TestCommandStdoutReader(t *testing.T) {
-	assert := asserter.New(t)
 
 	var buf strings.Builder
 	var cmd = popen.Command{
@@ -98,12 +91,11 @@ func TestCommandStdoutReader(t *testing.T) {
 	}
 
 	stdout, _, err := cmd.Run(context.Background())
-	assert.That(err, p.IsNoError())
-	assert.That(buf.String(), p.Eq(stdout))
+	verify.That(t, err).IsNil()
+	verify.That(t, buf.String()).Eq(stdout)
 }
 
 func TestCommandStdoutReaderErrorAbortsCommand(t *testing.T) {
-	assert := asserter.New(t)
 
 	var expectedError = errors.New("stdout reader error")
 	var cmd = popen.Command{
@@ -120,11 +112,11 @@ func TestCommandStdoutReaderErrorAbortsCommand(t *testing.T) {
 	}
 
 	_, _, err := cmd.Run(context.Background())
-	assert.That(err, p.IsError(expectedError))
+	verify.That(t, err).IsError(expectedError)
 }
 
 func TestCommandStdoutToFile(t *testing.T) {
-	assert := asserter.New(t)
+
 	var tmp = tempDir(t)
 
 	var stdoutFile = filepath.Join(tmp, "stdout.txt")
@@ -138,8 +130,8 @@ func TestCommandStdoutToFile(t *testing.T) {
 	}
 
 	stdout, _, err := cmd.Run(context.Background())
-	assert.That(err, p.IsNoError())
-	assert.That(stdout, p.Eq("")) // Discarded when written to file
+	verify.That(t, err).IsNil()
+	verify.That(t, stdout).Eq("") // Discarded when written to file
 
 	var linecnt = 0
 	fileutils.ReadFile(stdoutFile, func(r io.Reader) error {
@@ -151,11 +143,10 @@ func TestCommandStdoutToFile(t *testing.T) {
 	})
 	content, _ := ioutil.ReadFile(stdoutFile)
 	fmt.Println(string(content))
-	assert.That(linecnt, p.Eq(10))
+	verify.That(t, linecnt).Eq(10)
 }
 
 func TestCommandStdoutToInvalidPathFile(t *testing.T) {
-	assert := asserter.New(t)
 
 	var cmd = popen.Command{
 		Command: "bash",
@@ -167,9 +158,9 @@ func TestCommandStdoutToInvalidPathFile(t *testing.T) {
 	}
 
 	stdout, _, err := cmd.Run(context.Background())
-	assert.That(err, p.IsNotNil())
-	assert.That(os.IsNotExist(errors.Unwrap(err)), p.IsTrue())
-	assert.That(stdout, p.Eq("")) // Discarded when written to file
+	verify.That(t, err).IsNotNil()
+	verify.That(t, os.IsNotExist(errors.Unwrap(err))).IsTrue()
+	verify.That(t, stdout).Eq("") // Discarded when written to file
 }
 
 // Stdout
@@ -179,7 +170,6 @@ func TestCommandStdoutToInvalidPathFile(t *testing.T) {
 // Stderr
 
 func TestCommandStderrReader(t *testing.T) {
-	assert := asserter.New(t)
 
 	var buf strings.Builder
 	var cmd = popen.Command{
@@ -195,12 +185,11 @@ func TestCommandStderrReader(t *testing.T) {
 	}
 
 	_, stderr, err := cmd.Run(context.Background())
-	assert.That(err, p.IsNoError())
-	assert.That(buf.String(), p.Eq(stderr))
+	verify.That(t, err).IsNil()
+	verify.That(t, buf.String()).Eq(stderr)
 }
 
 func TestCommandStderrReaderErrorAbortsCommand(t *testing.T) {
-	assert := asserter.New(t)
 
 	var expectedError = errors.New("stderr reader error")
 	var cmd = popen.Command{
@@ -217,11 +206,11 @@ func TestCommandStderrReaderErrorAbortsCommand(t *testing.T) {
 	}
 
 	_, _, err := cmd.Run(context.Background())
-	assert.That(err, p.IsError(expectedError))
+	verify.That(t, err).IsError(expectedError)
 }
 
 func TestCommandStderrToFile(t *testing.T) {
-	assert := asserter.New(t)
+
 	var tmp = tempDir(t)
 
 	var stderrFile = filepath.Join(tmp, "stderr.txt")
@@ -235,8 +224,8 @@ func TestCommandStderrToFile(t *testing.T) {
 	}
 
 	_, stderr, err := cmd.Run(context.Background())
-	assert.That(err, p.IsNoError())
-	assert.That(stderr, p.Eq("")) // Discarded when written to file
+	verify.That(t, err).IsNil()
+	verify.That(t, stderr).Eq("") // Discarded when written to file
 
 	var linecnt = 0
 	fileutils.ReadFile(stderrFile, func(r io.Reader) error {
@@ -246,11 +235,10 @@ func TestCommandStderrToFile(t *testing.T) {
 		}
 		return scanner.Err()
 	})
-	assert.That(linecnt, p.Eq(10))
+	verify.That(t, linecnt).Eq(10)
 }
 
 func TestCommandStderrToInvalidPathFile(t *testing.T) {
-	assert := asserter.New(t)
 
 	var cmd = popen.Command{
 		Command: "bash",
@@ -262,9 +250,9 @@ func TestCommandStderrToInvalidPathFile(t *testing.T) {
 	}
 
 	_, stderr, err := cmd.Run(context.Background())
-	assert.That(err, p.IsNotNil())
-	assert.That(os.IsNotExist(errors.Unwrap(err)), p.IsTrue())
-	assert.That(stderr, p.Eq("")) // Discarded when written to file
+	verify.That(t, err).IsNotNil()
+	verify.That(t, os.IsNotExist(errors.Unwrap(err))).IsTrue()
+	verify.That(t, stderr).Eq("") // Discarded when written to file
 }
 
 // Stderr
@@ -274,15 +262,14 @@ func TestCommandStderrToInvalidPathFile(t *testing.T) {
 // Invalid command
 
 func TestCommandWithInvalidCommand(t *testing.T) {
-	assert := asserter.New(t)
 
 	var cmd = popen.Command{
 		Command: "__invalid__command__",
 	}
 
 	_, _, err := cmd.Run(context.Background())
-	assert.That(err, p.IsNotNil())
-	assert.That(err, p.ToString(p.Contains("executable file not found")))
+	verify.That(t, err).IsNotNil()
+	verify.That(t, err).ToString().Contains("executable file not found")
 }
 
 // Invalid command

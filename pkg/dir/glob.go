@@ -227,7 +227,7 @@ func (m *GlobMatcher) ScanFrom(basepath string, walkFn fs.WalkDirFunc) error {
 		return nil // Ignore any error if no match
 	}
 
-	return fileutils.WalkDir(basepath, m.prefix, f)
+	return fileutils.Walk(basepath, m.prefix, f)
 }
 
 // GlobMatcher

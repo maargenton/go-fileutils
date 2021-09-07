@@ -1,24 +1,26 @@
-# go-fileutil
+# go-fileutils
 
-Go filesystem utilities
+A collection of filesystem utilities for Go
 
-[![GoDoc](
-  https://godoc.org/github.com/maargenton/go-fileutils?status.svg)](
-  https://godoc.org/github.com/maargenton/go-fileutils)
-[![Build Status](
-  https://travis-ci.org/maargenton/fileutils.svg?branch=master)](
-  https://travis-ci.org/maargenton/fileutil)
-[![codecov](
-  https://codecov.io/gh/maargenton/fileutil/branch/master/graph/badge.svg)](
-  https://codecov.io/gh/maargenton/fileutil)
+[![Latest](
+  https://img.shields.io/github/v/tag/maargenton/go-fileutils?color=blue&label=latest&logo=go&logoColor=white&sort=semver)](
+  https://pkg.go.dev/github.com/maargenton/go-fileutils)
+[![Build](
+  https://img.shields.io/github/workflow/status/maargenton/go-fileutils/build?label=build&logo=github&logoColor=aaaaaa)](
+  https://github.com/maargenton/go-fileutils/actions?query=branch%3Amaster)
+[![Codecov](
+  https://img.shields.io/codecov/c/github/maargenton/go-fileutils?label=codecov&logo=codecov&logoColor=aaaaaa&token=fVZ3ZMAgfo)](
+  https://codecov.io/gh/maargenton/go-fileutils)
 [![Go Report Card](
   https://goreportcard.com/badge/github.com/maargenton/go-fileutils)](
   https://goreportcard.com/report/github.com/maargenton/go-fileutils)
 
 
-Package `fileutil` is a small collection of utility functions to interact with
-the filesystem. The functions provided are slightly higher level than those
-provided by the `filepath` package.
+---------------------------
+
+Package `fileutils` is a collection of filesystem utilities including directory
+traversal with symlinks support, finding file and folders with extended glob
+pattern, filename manipulation and atomic file operations.
 
 ## Installation
 
