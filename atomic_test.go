@@ -77,7 +77,8 @@ func TestWriteFileIsAtomic(t *testing.T) {
 			err := fileutils.WriteFile(filename, func(w io.Writer) error {
 				return json.NewEncoder(w).Encode(content)
 			})
-			verify.That(t, err).IsNil()
+			verify.That(t, err,
+				verify.Context{Name: "i", Value: i}).IsNil()
 			wg.Done()
 		}()
 	}
