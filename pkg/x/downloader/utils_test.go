@@ -3,8 +3,7 @@ package downloader
 import (
 	"testing"
 
-	"github.com/maargenton/go-testpredicate/pkg/asserter"
-	"github.com/maargenton/go-testpredicate/pkg/p"
+	"github.com/maargenton/go-testpredicate/pkg/verify"
 )
 
 // ---------------------------------------------------------------------------
@@ -24,13 +23,11 @@ func TestDecodeContentRange(t *testing.T) {
 
 	for _, tc := range tcs {
 		t.Run(tc.value, func(t *testing.T) {
-			assert := asserter.New(t)
-
 			unit, s, e, l := decodeContentRange(tc.value)
-			assert.That(unit, p.Eq(tc.unit))
-			assert.That(s, p.Eq(tc.s))
-			assert.That(e, p.Eq(tc.e))
-			assert.That(l, p.Eq(tc.l))
+			verify.That(t, unit).Eq(tc.unit)
+			verify.That(t, s).Eq(tc.s)
+			verify.That(t, e).Eq(tc.e)
+			verify.That(t, l).Eq(tc.l)
 		})
 	}
 }
