@@ -17,19 +17,19 @@ func TestWindowsIsDirectoryName(t *testing.T) {
 		expected bool
 	}{
 		{"", true},
-		{"/", true},
+		{"\\", true},
 		{".", true},
-		{"./", true},
+		{".\\", true},
 		{"..", true},
-		{"../", true},
+		{"..\\", true},
 		{"foo", false},
-		{"foo/", true},
-		{"foo/bar", false},
-		{"foo/bar/", true},
-		{"foo/bar/.", true},
-		{"foo/bar/..", true},
-		{"foo/bar/baz.", false},
-		{"foo/bar/baz..", false},
+		{"foo\\", true},
+		{"foo\\bar", false},
+		{"foo\\bar\\", true},
+		{"foo\\bar\\.", true},
+		{"foo\\bar\\..", true},
+		{"foo\\bar\\baz.", false},
+		{"foo\\bar\\baz..", false},
 	}
 
 	for _, tc := range tcs {
