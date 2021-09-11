@@ -1,307 +1,307 @@
 package popen_test
 
-import (
-	"bufio"
-	"context"
-	"errors"
-	"fmt"
-	"io"
-	"io/ioutil"
-	"os"
-	"path/filepath"
-	"strings"
-	"testing"
+// import (
+// 	"bufio"
+// 	"context"
+// 	"errors"
+// 	"fmt"
+// 	"io"
+// 	"io/ioutil"
+// 	"os"
+// 	"path/filepath"
+// 	"strings"
+// 	"testing"
 
-	"github.com/maargenton/go-testpredicate/pkg/verify"
+// 	"github.com/maargenton/go-testpredicate/pkg/verify"
 
-	"github.com/maargenton/go-fileutils"
-	"github.com/maargenton/go-fileutils/pkg/popen"
-)
+// 	"github.com/maargenton/go-fileutils"
+// 	"github.com/maargenton/go-fileutils/pkg/popen"
+// )
 
-// ---------------------------------------------------------------------------
-// Directory and environment
+// // ---------------------------------------------------------------------------
+// // Directory and environment
 
-func TestCommandDirectory(t *testing.T) {
-	var tmp = tempDir(t)
-	var dir = filepath.Join(tmp, "a", "b", "c")
-	os.MkdirAll(dir, 0777)
+// func TestCommandDirectory(t *testing.T) {
+// 	var tmp = tempDir(t)
+// 	var dir = filepath.Join(tmp, "a", "b", "c")
+// 	os.MkdirAll(dir, 0777)
 
-	var cmd = popen.Command{
-		Directory: dir,
-		Command:   "pwd",
-	}
+// 	var cmd = popen.Command{
+// 		Directory: dir,
+// 		Command:   "pwd",
+// 	}
 
-	stdout, _, err := cmd.Run(context.Background())
-	verify.That(t, err).IsNil()
-	verify.That(t, stdout).StartsWith(dir) // Ignore trailing LF
-}
+// 	stdout, _, err := cmd.Run(context.Background())
+// 	verify.That(t, err).IsNil()
+// 	verify.That(t, stdout).StartsWith(dir) // Ignore trailing LF
+// }
 
-func TestCommandEnv(t *testing.T) {
-	var cmd = popen.Command{
-		Command: "env",
-		Env: []string{
-			"aaa=bbb",
-			"ccc=bbb",
-		},
-	}
-	stdout, _, err := cmd.Run(context.Background())
-	verify.That(t, err).IsNil()
-	var env = parseEnv(stdout)
+// func TestCommandEnv(t *testing.T) {
+// 	var cmd = popen.Command{
+// 		Command: "env",
+// 		Env: []string{
+// 			"aaa=bbb",
+// 			"ccc=bbb",
+// 		},
+// 	}
+// 	stdout, _, err := cmd.Run(context.Background())
+// 	verify.That(t, err).IsNil()
+// 	var env = parseEnv(stdout)
 
-	verify.That(t, env).MapKeys().IsSupersetOf([]string{"PATH", "aaa", "ccc"})
-}
+// 	verify.That(t, env).MapKeys().IsSupersetOf([]string{"PATH", "aaa", "ccc"})
+// }
 
-func TestCommandEnvOverride(t *testing.T) {
+// func TestCommandEnvOverride(t *testing.T) {
 
-	var cmd = popen.Command{
-		Command: "env",
-		Env: []string{
-			"aaa=bbb",
-			"ccc=bbb",
-		},
-		OverwriteEnv: true,
-	}
-	stdout, _, err := cmd.Run(context.Background())
-	verify.That(t, err).IsNil()
-	var env = parseEnv(stdout)
+// 	var cmd = popen.Command{
+// 		Command: "env",
+// 		Env: []string{
+// 			"aaa=bbb",
+// 			"ccc=bbb",
+// 		},
+// 		OverwriteEnv: true,
+// 	}
+// 	stdout, _, err := cmd.Run(context.Background())
+// 	verify.That(t, err).IsNil()
+// 	var env = parseEnv(stdout)
 
-	verify.That(t, env).MapKeys().IsSupersetOf([]string{"aaa", "ccc"})
-	verify.That(t, env).MapKeys().IsDisjointSetFrom([]string{"PATH"})
-}
+// 	verify.That(t, env).MapKeys().IsSupersetOf([]string{"aaa", "ccc"})
+// 	verify.That(t, env).MapKeys().IsDisjointSetFrom([]string{"PATH"})
+// }
 
-// Directory and environment
-// ---------------------------------------------------------------------------
+// // Directory and environment
+// // ---------------------------------------------------------------------------
 
-// ---------------------------------------------------------------------------
-// Stdout
+// // ---------------------------------------------------------------------------
+// // Stdout
 
-func TestCommandStdoutReader(t *testing.T) {
+// func TestCommandStdoutReader(t *testing.T) {
 
-	var buf strings.Builder
-	var cmd = popen.Command{
-		Command: "bash",
-		Arguments: []string{
-			"-c",
-			"for i in {1..10}; do echo Hello World; done",
-		},
-		StdoutReader: func(r io.Reader) error {
-			_, err := io.Copy(&buf, r)
-			return err
-		},
-	}
+// 	var buf strings.Builder
+// 	var cmd = popen.Command{
+// 		Command: "bash",
+// 		Arguments: []string{
+// 			"-c",
+// 			"for i in {1..10}; do echo Hello World; done",
+// 		},
+// 		StdoutReader: func(r io.Reader) error {
+// 			_, err := io.Copy(&buf, r)
+// 			return err
+// 		},
+// 	}
 
-	stdout, _, err := cmd.Run(context.Background())
-	verify.That(t, err).IsNil()
-	verify.That(t, buf.String()).Eq(stdout)
-}
+// 	stdout, _, err := cmd.Run(context.Background())
+// 	verify.That(t, err).IsNil()
+// 	verify.That(t, buf.String()).Eq(stdout)
+// }
 
-func TestCommandStdoutReaderErrorAbortsCommand(t *testing.T) {
+// func TestCommandStdoutReaderErrorAbortsCommand(t *testing.T) {
 
-	var expectedError = errors.New("stdout reader error")
-	var cmd = popen.Command{
-		Command: "bash",
-		Arguments: []string{
-			"-c",
-			"echo Hello;sleep 10;echo Bye",
-		},
-		StdoutReader: func(r io.Reader) error {
-			// // Uncomment should time out test after 5 sec
-			// io.Copy(ioutil.Discard, r)
-			return expectedError
-		},
-	}
+// 	var expectedError = errors.New("stdout reader error")
+// 	var cmd = popen.Command{
+// 		Command: "bash",
+// 		Arguments: []string{
+// 			"-c",
+// 			"echo Hello;sleep 10;echo Bye",
+// 		},
+// 		StdoutReader: func(r io.Reader) error {
+// 			// // Uncomment should time out test after 5 sec
+// 			// io.Copy(ioutil.Discard, r)
+// 			return expectedError
+// 		},
+// 	}
 
-	_, _, err := cmd.Run(context.Background())
-	verify.That(t, err).IsError(expectedError)
-}
+// 	_, _, err := cmd.Run(context.Background())
+// 	verify.That(t, err).IsError(expectedError)
+// }
 
-func TestCommandStdoutToFile(t *testing.T) {
+// func TestCommandStdoutToFile(t *testing.T) {
 
-	var tmp = tempDir(t)
+// 	var tmp = tempDir(t)
 
-	var stdoutFile = filepath.Join(tmp, "stdout.txt")
-	var cmd = popen.Command{
-		Command: "bash",
-		Arguments: []string{
-			"-c",
-			"for i in {1..10}; do echo Hello World; done",
-		},
-		WriteStdoutToFile: stdoutFile,
-	}
+// 	var stdoutFile = filepath.Join(tmp, "stdout.txt")
+// 	var cmd = popen.Command{
+// 		Command: "bash",
+// 		Arguments: []string{
+// 			"-c",
+// 			"for i in {1..10}; do echo Hello World; done",
+// 		},
+// 		WriteStdoutToFile: stdoutFile,
+// 	}
 
-	stdout, _, err := cmd.Run(context.Background())
-	verify.That(t, err).IsNil()
-	verify.That(t, stdout).Eq("") // Discarded when written to file
+// 	stdout, _, err := cmd.Run(context.Background())
+// 	verify.That(t, err).IsNil()
+// 	verify.That(t, stdout).Eq("") // Discarded when written to file
 
-	var linecnt = 0
-	fileutils.ReadFile(stdoutFile, func(r io.Reader) error {
-		var scanner = bufio.NewScanner(r)
-		for scanner.Scan() {
-			linecnt++
-		}
-		return scanner.Err()
-	})
-	content, _ := ioutil.ReadFile(stdoutFile)
-	fmt.Println(string(content))
-	verify.That(t, linecnt).Eq(10)
-}
+// 	var linecnt = 0
+// 	fileutils.ReadFile(stdoutFile, func(r io.Reader) error {
+// 		var scanner = bufio.NewScanner(r)
+// 		for scanner.Scan() {
+// 			linecnt++
+// 		}
+// 		return scanner.Err()
+// 	})
+// 	content, _ := ioutil.ReadFile(stdoutFile)
+// 	fmt.Println(string(content))
+// 	verify.That(t, linecnt).Eq(10)
+// }
 
-func TestCommandStdoutToInvalidPathFile(t *testing.T) {
+// func TestCommandStdoutToInvalidPathFile(t *testing.T) {
 
-	var cmd = popen.Command{
-		Command: "bash",
-		Arguments: []string{
-			"-c",
-			"for i in {1..10}; do echo Hello World; done",
-		},
-		WriteStdoutToFile: "__invalid_path__/stdout.txt",
-	}
+// 	var cmd = popen.Command{
+// 		Command: "bash",
+// 		Arguments: []string{
+// 			"-c",
+// 			"for i in {1..10}; do echo Hello World; done",
+// 		},
+// 		WriteStdoutToFile: "__invalid_path__/stdout.txt",
+// 	}
 
-	stdout, _, err := cmd.Run(context.Background())
-	verify.That(t, err).IsNotNil()
-	verify.That(t, os.IsNotExist(errors.Unwrap(err))).IsTrue()
-	verify.That(t, stdout).Eq("") // Discarded when written to file
-}
+// 	stdout, _, err := cmd.Run(context.Background())
+// 	verify.That(t, err).IsNotNil()
+// 	verify.That(t, os.IsNotExist(errors.Unwrap(err))).IsTrue()
+// 	verify.That(t, stdout).Eq("") // Discarded when written to file
+// }
 
-// Stdout
-// ---------------------------------------------------------------------------
+// // Stdout
+// // ---------------------------------------------------------------------------
 
-// ---------------------------------------------------------------------------
-// Stderr
+// // ---------------------------------------------------------------------------
+// // Stderr
 
-func TestCommandStderrReader(t *testing.T) {
+// func TestCommandStderrReader(t *testing.T) {
 
-	var buf strings.Builder
-	var cmd = popen.Command{
-		Command: "bash",
-		Arguments: []string{
-			"-c",
-			"for i in {1..10}; do echo Hello World 1>&2; done",
-		},
-		StderrReader: func(r io.Reader) error {
-			_, err := io.Copy(&buf, r)
-			return err
-		},
-	}
+// 	var buf strings.Builder
+// 	var cmd = popen.Command{
+// 		Command: "bash",
+// 		Arguments: []string{
+// 			"-c",
+// 			"for i in {1..10}; do echo Hello World 1>&2; done",
+// 		},
+// 		StderrReader: func(r io.Reader) error {
+// 			_, err := io.Copy(&buf, r)
+// 			return err
+// 		},
+// 	}
 
-	_, stderr, err := cmd.Run(context.Background())
-	verify.That(t, err).IsNil()
-	verify.That(t, buf.String()).Eq(stderr)
-}
+// 	_, stderr, err := cmd.Run(context.Background())
+// 	verify.That(t, err).IsNil()
+// 	verify.That(t, buf.String()).Eq(stderr)
+// }
 
-func TestCommandStderrReaderErrorAbortsCommand(t *testing.T) {
+// func TestCommandStderrReaderErrorAbortsCommand(t *testing.T) {
 
-	var expectedError = errors.New("stderr reader error")
-	var cmd = popen.Command{
-		Command: "bash",
-		Arguments: []string{
-			"-c",
-			"echo Hello;sleep 10;echo Bye",
-		},
-		StderrReader: func(r io.Reader) error {
-			// // Uncomment should time out test after 5 sec
-			// io.Copy(ioutil.Discard, r)
-			return expectedError
-		},
-	}
+// 	var expectedError = errors.New("stderr reader error")
+// 	var cmd = popen.Command{
+// 		Command: "bash",
+// 		Arguments: []string{
+// 			"-c",
+// 			"echo Hello;sleep 10;echo Bye",
+// 		},
+// 		StderrReader: func(r io.Reader) error {
+// 			// // Uncomment should time out test after 5 sec
+// 			// io.Copy(ioutil.Discard, r)
+// 			return expectedError
+// 		},
+// 	}
 
-	_, _, err := cmd.Run(context.Background())
-	verify.That(t, err).IsError(expectedError)
-}
+// 	_, _, err := cmd.Run(context.Background())
+// 	verify.That(t, err).IsError(expectedError)
+// }
 
-func TestCommandStderrToFile(t *testing.T) {
+// func TestCommandStderrToFile(t *testing.T) {
 
-	var tmp = tempDir(t)
+// 	var tmp = tempDir(t)
 
-	var stderrFile = filepath.Join(tmp, "stderr.txt")
-	var cmd = popen.Command{
-		Command: "bash",
-		Arguments: []string{
-			"-c",
-			"for i in {1..10}; do echo Hello World 1>&2; done",
-		},
-		WriteStderrToFile: stderrFile,
-	}
+// 	var stderrFile = filepath.Join(tmp, "stderr.txt")
+// 	var cmd = popen.Command{
+// 		Command: "bash",
+// 		Arguments: []string{
+// 			"-c",
+// 			"for i in {1..10}; do echo Hello World 1>&2; done",
+// 		},
+// 		WriteStderrToFile: stderrFile,
+// 	}
 
-	_, stderr, err := cmd.Run(context.Background())
-	verify.That(t, err).IsNil()
-	verify.That(t, stderr).Eq("") // Discarded when written to file
+// 	_, stderr, err := cmd.Run(context.Background())
+// 	verify.That(t, err).IsNil()
+// 	verify.That(t, stderr).Eq("") // Discarded when written to file
 
-	var linecnt = 0
-	fileutils.ReadFile(stderrFile, func(r io.Reader) error {
-		var scanner = bufio.NewScanner(r)
-		for scanner.Scan() {
-			linecnt++
-		}
-		return scanner.Err()
-	})
-	verify.That(t, linecnt).Eq(10)
-}
+// 	var linecnt = 0
+// 	fileutils.ReadFile(stderrFile, func(r io.Reader) error {
+// 		var scanner = bufio.NewScanner(r)
+// 		for scanner.Scan() {
+// 			linecnt++
+// 		}
+// 		return scanner.Err()
+// 	})
+// 	verify.That(t, linecnt).Eq(10)
+// }
 
-func TestCommandStderrToInvalidPathFile(t *testing.T) {
+// func TestCommandStderrToInvalidPathFile(t *testing.T) {
 
-	var cmd = popen.Command{
-		Command: "bash",
-		Arguments: []string{
-			"-c",
-			"for i in {1..10}; do echo Hello World 1> &2; done",
-		},
-		WriteStderrToFile: "__invalid_path__/stderr.txt",
-	}
+// 	var cmd = popen.Command{
+// 		Command: "bash",
+// 		Arguments: []string{
+// 			"-c",
+// 			"for i in {1..10}; do echo Hello World 1> &2; done",
+// 		},
+// 		WriteStderrToFile: "__invalid_path__/stderr.txt",
+// 	}
 
-	_, stderr, err := cmd.Run(context.Background())
-	verify.That(t, err).IsNotNil()
-	verify.That(t, os.IsNotExist(errors.Unwrap(err))).IsTrue()
-	verify.That(t, stderr).Eq("") // Discarded when written to file
-}
+// 	_, stderr, err := cmd.Run(context.Background())
+// 	verify.That(t, err).IsNotNil()
+// 	verify.That(t, os.IsNotExist(errors.Unwrap(err))).IsTrue()
+// 	verify.That(t, stderr).Eq("") // Discarded when written to file
+// }
 
-// Stderr
-// ---------------------------------------------------------------------------
+// // Stderr
+// // ---------------------------------------------------------------------------
 
-// ---------------------------------------------------------------------------
-// Invalid command
+// // ---------------------------------------------------------------------------
+// // Invalid command
 
-func TestCommandWithInvalidCommand(t *testing.T) {
+// func TestCommandWithInvalidCommand(t *testing.T) {
 
-	var cmd = popen.Command{
-		Command: "__invalid__command__",
-	}
+// 	var cmd = popen.Command{
+// 		Command: "__invalid__command__",
+// 	}
 
-	_, _, err := cmd.Run(context.Background())
-	verify.That(t, err).IsNotNil()
-	verify.That(t, err).ToString().Contains("executable file not found")
-}
+// 	_, _, err := cmd.Run(context.Background())
+// 	verify.That(t, err).IsNotNil()
+// 	verify.That(t, err).ToString().Contains("executable file not found")
+// }
 
-// Invalid command
-// ---------------------------------------------------------------------------
+// // Invalid command
+// // ---------------------------------------------------------------------------
 
-// ---------------------------------------------------------------------------
-// Helpers
+// // ---------------------------------------------------------------------------
+// // Helpers
 
-func tempDir(t *testing.T) string {
-	tempDir, err := ioutil.TempDir(".", "testdata-")
-	if err != nil {
-		t.Fatalf("failed to create temp directory: %v", err)
-	}
-	tempDir, err = filepath.Abs(tempDir)
-	if err != nil {
-		t.Fatalf("failed to create temp directory: %v", err)
-	}
+// func tempDir(t *testing.T) string {
+// 	tempDir, err := ioutil.TempDir(".", "testdata-")
+// 	if err != nil {
+// 		t.Fatalf("failed to create temp directory: %v", err)
+// 	}
+// 	tempDir, err = filepath.Abs(tempDir)
+// 	if err != nil {
+// 		t.Fatalf("failed to create temp directory: %v", err)
+// 	}
 
-	t.Cleanup(func() {
-		os.RemoveAll(tempDir)
-	})
-	return tempDir
-}
+// 	t.Cleanup(func() {
+// 		os.RemoveAll(tempDir)
+// 	})
+// 	return tempDir
+// }
 
-func parseEnv(env string) map[string]string {
-	var result = make(map[string]string)
-	scanner := bufio.NewScanner(strings.NewReader(env))
-	for scanner.Scan() {
-		var line = scanner.Text()
-		var parts = strings.SplitN(line, "=", 2)
-		var key, value = parts[0], parts[1]
-		result[key] = value
-	}
-	return result
-}
+// func parseEnv(env string) map[string]string {
+// 	var result = make(map[string]string)
+// 	scanner := bufio.NewScanner(strings.NewReader(env))
+// 	for scanner.Scan() {
+// 		var line = scanner.Text()
+// 		var parts = strings.SplitN(line, "=", 2)
+// 		var key, value = parts[0], parts[1]
+// 		result[key] = value
+// 	}
+// 	return result
+// }

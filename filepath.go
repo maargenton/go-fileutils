@@ -46,7 +46,7 @@ func Base(path string) string {
 // separator or appends one for '.' or '..' path fragments.
 func Clean(input string) string {
 	dir := IsDirectoryName(input)
-	output := filepath.Clean(input)
+	output := filepath.ToSlash(filepath.Clean(input))
 	if dir && !hasTrailingSeparator(output) {
 		output += string(Separator)
 	}
