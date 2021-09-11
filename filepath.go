@@ -26,7 +26,7 @@ func IsPathSeparator(c rune) bool {
 	return c == Separator || c == OSSeparator
 }
 
-// IsDirectoryPath returns true is the input can be inferred to be a directory
+// IsDirectoryName returns true is the input can be inferred to be a directory
 // based on its name only, without having to access the filesystem to check.
 // This include paths with trailing separator, an empty path that resolved to
 // "./", or paths the end with either a "." or ".." path fragment that are
@@ -45,21 +45,17 @@ func Base(path string) string {
 // Clean is equivalent to `filepath.Clean()`, but preserves any trailing path
 // separator or appends one for '.' or '..' path fragments.
 func Clean(input string) string {
-	dir := input == "" || input == "." || input == ".." ||
-		strings.HasSuffix(input, string(filepath.Separator)+"..") ||
-		strings.HasSuffix(input, string(filepath.Separator)+".") ||
-		hasTrailingSeparator(input)
-
+	dir := IsDirectoryName(input)
 	output := filepath.Clean(input)
 	if dir && !hasTrailingSeparator(output) {
-		output += string(filepath.Separator)
+		output += string(Separator)
 	}
 	return output
 }
 
-// func Clean(path string) string {
-// 	return filepath.Clean(path)
-// }
+func hasTrailingSeparator(path string) bool {
+	return len(path) > 0 && IsPathSeparator(rune(path[len(path)-1]))
+}
 
 func Dir(path string) string {
 	return filepath.Dir(path)

@@ -8,6 +8,9 @@ import (
 	"github.com/maargenton/go-testpredicate/pkg/require"
 )
 
+// ---------------------------------------------------------------------------
+// fileutils.IsDirectoryName
+
 func TestIsDirectoryName(t *testing.T) {
 	var tcs = []struct {
 		path     string
@@ -42,3 +45,47 @@ func TestIsDirectoryName(t *testing.T) {
 		})
 	}
 }
+
+// fileutils.IsDirectoryName
+// ---------------------------------------------------------------------------
+
+// ---------------------------------------------------------------------------
+// fileutils.Base
+// fileutils.Base
+// ---------------------------------------------------------------------------
+
+// ---------------------------------------------------------------------------
+// fileutils.Clean
+
+func TestClean(t *testing.T) {
+	var tcs = []struct {
+		input, output string
+	}{
+		{"/", "/"},
+		{"//", "/"},
+		{"/dev/", "/dev/"},
+		{"./abc/", "abc/"},
+		{"./abc//def", "abc/def"},
+		{"aaa/..", "./"},
+		{"aaa/../", "./"},
+		{"aaa/.", "aaa/"},
+		{"aaa/./", "aaa/"},
+		{".", "./"},
+		{"./", "./"},
+		{"", "./"},
+	}
+
+	for _, tc := range tcs {
+		t.Run(fmt.Sprintf("Given %v", tc.input), func(t *testing.T) {
+			t.Run("when calling Clean", func(t *testing.T) {
+				output := fileutils.Clean(tc.input)
+				t.Run("then output match expected", func(t *testing.T) {
+					require.That(t, output).Eq(tc.output)
+				})
+			})
+		})
+	}
+}
+
+// fileutils.Clean
+// ---------------------------------------------------------------------------

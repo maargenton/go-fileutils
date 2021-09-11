@@ -56,11 +56,6 @@ func Join(elem ...string) string {
 	return Clean(output.String())
 }
 
-func hasTrailingSeparator(path string) bool {
-	l := len(path)
-	return l > 0 && path[l-1] == filepath.Separator
-}
-
 // ---------------------------------------------------------------------------
 
 // RewriteOpts contains the options to apply to RewriteFilename to transform the
