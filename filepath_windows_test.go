@@ -11,7 +11,7 @@ import (
 func TestWindowsOnly(t *testing.T) {
 	require.That(t, "Running on windows").Eq("")
 }
-func TestIsDirectoryName(t *testing.T) {
+func TestWindowsIsDirectoryName(t *testing.T) {
 	var tcs = []struct {
 		path     string
 		expected bool
