@@ -11,20 +11,20 @@ import (
 // Local wrappers of filepath package function, preserving trailing path
 // separator, commonly used to indicate a directory.
 
-// Clean is equivalent to `filepath.Clean()`, but preserves any trailing path
-// separator or appends one for '.' or '..' path fragments.
-func Clean(input string) string {
-	dir := input == "" || input == "." || input == ".." ||
-		strings.HasSuffix(input, string(filepath.Separator)+"..") ||
-		strings.HasSuffix(input, string(filepath.Separator)+".") ||
-		hasTrailingSeparator(input)
+// // Clean is equivalent to `filepath.Clean()`, but preserves any trailing path
+// // separator or appends one for '.' or '..' path fragments.
+// func Clean(input string) string {
+// 	dir := input == "" || input == "." || input == ".." ||
+// 		strings.HasSuffix(input, string(filepath.Separator)+"..") ||
+// 		strings.HasSuffix(input, string(filepath.Separator)+".") ||
+// 		hasTrailingSeparator(input)
 
-	output := filepath.Clean(input)
-	if dir && !hasTrailingSeparator(output) {
-		output += string(filepath.Separator)
-	}
-	return output
-}
+// 	output := filepath.Clean(input)
+// 	if dir && !hasTrailingSeparator(output) {
+// 		output += string(filepath.Separator)
+// 	}
+// 	return output
+// }
 
 // Rel is equivalent to `filepath.Rel()`, but preserves any trailing path
 // separator.

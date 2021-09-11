@@ -18,9 +18,14 @@ A collection of filesystem utilities for Go
 
 ---------------------------
 
-Package `fileutils` is a collection of filesystem utilities including directory
-traversal with symlinks support, finding file and folders with extended glob
-pattern, filename manipulation and atomic file operations.
+Package `fileutils` is a collection of filename manipulation and filesystem
+utilities including directory traversal with symlinks support, finding file and
+folders with extended glob pattern, and atomic file operations. It also provides
+a similar set of functions as the "path/filepath" package, but:
+- Always uses '/' as path separator in all returned filenames, as this is the
+  default for unix platforms and compatible with windows.
+- Preserves a trailing separator if present, as this is commonly used to
+  differentiate between and file name and a directory name.
 
 > **NOTE:** This package is directly usable on all Unix-like operating systems,
 > and its API is now stable as of v0.5.0 -- Windows support still requires more
