@@ -11,30 +11,6 @@ import (
 )
 
 // ---------------------------------------------------------------------------
-// fileutils.FromSlash
-
-func TestUnixFromSlash(t *testing.T) {
-	var tcs = []struct {
-		input, output string
-	}{
-		{"path/to/file", "path/to/file"},
-		{"path/to/dir/", "path/to/dir/"},
-		{"/path/to/file", "/path/to/file"},
-		{"/path/to/dir/", "/path/to/dir/"},
-	}
-
-	for _, tc := range tcs {
-		t.Run(fmt.Sprintf("FromSlash(%#+v)", tc.input), func(t *testing.T) {
-			output := fileutils.FromSlash(tc.input)
-			require.That(t, output).Eq(tc.output)
-		})
-	}
-}
-
-// fileutils.FromSlash
-// ---------------------------------------------------------------------------
-
-// ---------------------------------------------------------------------------
 // fileutils.IsAbs
 
 func TestUnixIsAbs(t *testing.T) {
@@ -55,6 +31,53 @@ func TestUnixIsAbs(t *testing.T) {
 }
 
 // fileutils.IsAbs
+// ---------------------------------------------------------------------------
+
+// ---------------------------------------------------------------------------
+// fileutils.Join
+
+func TestUnixJoin(t *testing.T) {
+	var tcs = []struct {
+		input  []string
+		output string
+	}{
+		{[]string{"/dev", "tty.usbserial-1240"}, "/dev/tty.usbserial-1240"},
+		{[]string{".", "/dev", "tty.usbserial-1240"}, "/dev/tty.usbserial-1240"},
+	}
+
+	for _, tc := range tcs {
+		t.Run(fmt.Sprintf("Join(%#+v)", tc.input), func(t *testing.T) {
+			output := fileutils.Join(tc.input...)
+			require.That(t, output).Eq(tc.output)
+		})
+	}
+}
+
+// fileutils.Join
+// ---------------------------------------------------------------------------
+
+// ---------------------------------------------------------------------------
+// fileutils.ToNative
+
+func TestUnixToNative(t *testing.T) {
+	var tcs = []struct {
+		input, output string
+	}{
+		{"path/to/file", "path/to/file"},
+		{"path/to/dir/", "path/to/dir/"},
+		{"/path/to/file", "/path/to/file"},
+		{"/path/to/dir/", "/path/to/dir/"},
+	}
+
+	for _, tc := range tcs {
+		t.Run(fmt.Sprintf("ToNative(%#+v)", tc.input), func(t *testing.T) {
+			output := fileutils.ToNative(tc.input)
+			require.That(t, output).Eq(tc.output)
+		})
+	}
+}
+
+// fileutils.ToNative
 // ---------------------------------------------------------------------------
 
 // ---------------------------------------------------------------------------

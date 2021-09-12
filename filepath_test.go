@@ -158,3 +158,30 @@ func TestExt(t *testing.T) {
 
 // fileutils.Ext
 // ---------------------------------------------------------------------------
+
+// ---------------------------------------------------------------------------
+// fileutils.Join
+
+func TestJoin(t *testing.T) {
+	var tcs = []struct {
+		input  []string
+		output string
+	}{
+		{[]string{"aaa/bbb", "ccc"}, "aaa/bbb/ccc"},
+		{[]string{"aaa/bbb/", "ccc"}, "aaa/bbb/ccc"},
+		{[]string{"aaa/bbb/", "ccc/"}, "aaa/bbb/ccc/"},
+		{[]string{"", ""}, "./"},
+		{[]string{"aaa/bbb", ""}, "aaa/bbb/"},
+		{[]string{"aaa/bbb", "../ccc", "../ddd"}, "aaa/ddd"},
+	}
+
+	for _, tc := range tcs {
+		t.Run(fmt.Sprintf("Join(%#+v)", tc.input), func(t *testing.T) {
+			output := fileutils.Join(tc.input...)
+			require.That(t, output).Eq(tc.output)
+		})
+	}
+}
+
+// fileutils.Join
+// ---------------------------------------------------------------------------

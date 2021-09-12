@@ -70,10 +70,6 @@ func Ext(path string) string {
 	return filepath.Ext(path)
 }
 
-func FromSlash(path string) string {
-	return filepath.FromSlash(path)
-}
-
 // func HasPrefix(p, prefix string) bool //DEPRECATED {
 // 	return filepath.HasPrefix(path)
 // }
@@ -82,9 +78,22 @@ func IsAbs(path string) bool {
 	return filepath.IsAbs(path)
 }
 
-// func Join(elem ...string) string {
-// 	return filepath.Join(elem...)
-// }
+// Join joins multiple path fragments into a single path, preserving a trailing
+// separator if any, and handling any intermediate absolute path as the new root
+// of the resulting path.
+func Join(elem ...string) string {
+	var output strings.Builder
+	for _, e := range elem {
+		if filepath.IsAbs(e) {
+			output.Reset()
+		}
+		if output.Len() > 0 {
+			output.WriteRune(filepath.Separator)
+		}
+		output.WriteString(Clean(e))
+	}
+	return Clean(output.String())
+}
 
 // Split splits the last path fragment of `path` from everything that precedes,
 // so that path = dir+file.
@@ -102,8 +111,8 @@ func Split(path string) (dir, base string) {
 	return
 }
 
-func SplitList(path string) []string {
-	return filepath.SplitList(path)
+func ToNative(path string) string {
+	return filepath.FromSlash(path)
 }
 
 func ToSlash(path string) string {

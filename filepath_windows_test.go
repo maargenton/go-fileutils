@@ -128,30 +128,6 @@ func TestWindowsSplit(t *testing.T) {
 // ---------------------------------------------------------------------------
 
 // ---------------------------------------------------------------------------
-// fileutils.FromSlash
-
-func TestWindowsFromSlash(t *testing.T) {
-	var tcs = []struct {
-		input, output string
-	}{
-		{"path/to/file", "path\\to\\file"},
-		{"path/to/dir/", "path\\to\\dir\\"},
-		{"/path/to/file", "\\path\\to\\file"},
-		{"/path/to/dir/", "\\path\\to\\dir\\"},
-	}
-
-	for _, tc := range tcs {
-		t.Run(fmt.Sprintf("FromSlash(%#+v)", tc.input), func(t *testing.T) {
-			output := fileutils.FromSlash(tc.input)
-			require.That(t, output).Eq(tc.output)
-		})
-	}
-}
-
-// fileutils.FromSlash
-// ---------------------------------------------------------------------------
-
-// ---------------------------------------------------------------------------
 // fileutils.IsAbs
 
 func TestWindowsIsAbs(t *testing.T) {
@@ -174,6 +150,56 @@ func TestWindowsIsAbs(t *testing.T) {
 }
 
 // fileutils.IsAbs
+// ---------------------------------------------------------------------------
+
+// ---------------------------------------------------------------------------
+// fileutils.Join
+
+func TestJoin(t *testing.T) {
+	var tcs = []struct {
+		input  []string
+		output string
+	}{
+		{[]string{"aaa\\bbb", "ccc"}, "aaa/bbb/ccc"},
+		{[]string{"aaa\\bbb\\", "ccc"}, "aaa/bbb/ccc"},
+		{[]string{"aaa\\bbb\\", "ccc\\"}, "aaa/bbb/ccc/"},
+		{[]string{"c:\\dev", "tty.usbserial-1240"}, "c:/dev/tty.usbserial-1240"},
+		{[]string{"prefix\\path\\to\\dir\\", "c:\\dev", "tty.usbserial-1240"}, "c:/dev/tty.usbserial-1240"},
+	}
+
+	for _, tc := range tcs {
+		t.Run(fmt.Sprintf("Join(%#+v)", tc.input), func(t *testing.T) {
+			output := fileutils.Join(tc.input...)
+			require.That(t, output).Eq(tc.output)
+		})
+	}
+}
+
+// fileutils.Join
+// ---------------------------------------------------------------------------
+
+// ---------------------------------------------------------------------------
+// fileutils.ToNative
+
+func TestWindowsToNative(t *testing.T) {
+	var tcs = []struct {
+		input, output string
+	}{
+		{"path/to/file", "path\\to\\file"},
+		{"path/to/dir/", "path\\to\\dir\\"},
+		{"/path/to/file", "\\path\\to\\file"},
+		{"/path/to/dir/", "\\path\\to\\dir\\"},
+	}
+
+	for _, tc := range tcs {
+		t.Run(fmt.Sprintf("ToNative(%#+v)", tc.input), func(t *testing.T) {
+			output := fileutils.ToNative(tc.input)
+			require.That(t, output).Eq(tc.output)
+		})
+	}
+}
+
+// fileutils.ToNative
 // ---------------------------------------------------------------------------
 
 // ---------------------------------------------------------------------------
