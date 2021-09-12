@@ -9,10 +9,6 @@ import (
 	"github.com/maargenton/go-testpredicate/pkg/verify"
 )
 
-func TestWindowsOnly(t *testing.T) {
-	require.That(t, "Running on windows").Eq("")
-}
-
 // ---------------------------------------------------------------------------
 // fileutils.IsDirectoryName
 
