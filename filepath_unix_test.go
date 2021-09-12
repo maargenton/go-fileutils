@@ -127,3 +127,32 @@ func TestUnixVolumeName(t *testing.T) {
 
 // fileutils.VolumeName
 // ---------------------------------------------------------------------------
+
+// ---------------------------------------------------------------------------
+// ---------------------------------------------------------------------------
+// Filename manipulation function that might need to access the underlying
+// filesystem to evaluate their result.
+// ---------------------------------------------------------------------------
+// ---------------------------------------------------------------------------
+
+// ---------------------------------------------------------------------------
+// fileutils.Abs
+func TestUnixAbs(t *testing.T) {
+	var tcs = []struct {
+		input, prefix, suffix string
+	}{
+		{"/tmp/foo", "/tmp/foo", "/tmp/foo"},
+	}
+
+	for _, tc := range tcs {
+		t.Run(fmt.Sprintf("Abs(%#+v)", tc.input), func(t *testing.T) {
+			output, err := fileutils.Abs(tc.input)
+			require.That(t, err).IsNil()
+			require.That(t, output).StartsWith(tc.prefix)
+			require.That(t, output).EndsWith(tc.suffix)
+		})
+	}
+}
+
+// fileutils.Abs
+// ---------------------------------------------------------------------------

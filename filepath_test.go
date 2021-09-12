@@ -201,7 +201,6 @@ func TestAbs(t *testing.T) {
 	}{
 		{"testdata/src", "", "testdata/src"},
 		{"testdata/src/", "", "testdata/src/"},
-		{"/tmp/foo", "/tmp/foo", "/tmp/foo"},
 	}
 
 	for _, tc := range tcs {
