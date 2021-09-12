@@ -155,7 +155,7 @@ func TestWindowsIsAbs(t *testing.T) {
 // ---------------------------------------------------------------------------
 // fileutils.Join
 
-func TestJoin(t *testing.T) {
+func TestWindowsJoin(t *testing.T) {
 	var tcs = []struct {
 		input  []string
 		output string
