@@ -207,7 +207,7 @@ func TestRel(t *testing.T) {
 	}
 
 	for _, tc := range tcs {
-		t.Run(fmt.Sprintf("Rel(%#+v, %#+v)", tc.basepath, tc.targetpath), func(t *testing.T) {
+		t.Run(fmt.Sprintf("Rel(%#+v,%#+v)", tc.basepath, tc.targetpath), func(t *testing.T) {
 			output, err := fileutils.Rel(tc.basepath, tc.targetpath)
 			require.That(t, err).IsNil()
 			require.That(t, output).Eq(tc.output)
