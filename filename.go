@@ -3,7 +3,6 @@ package fileutils
 import (
 	"fmt"
 	"os"
-	"path/filepath"
 	"strings"
 )
 
@@ -20,8 +19,8 @@ type RewriteOpts struct {
 // can change dirname, basename, extension or append / prepend a fragment to the
 // basename.
 func RewriteFilename(input string, opts *RewriteOpts) string {
-	dirname, filename := filepath.Split(input)
-	extname := filepath.Ext(filename)
+	dirname, filename := Split(input)
+	extname := Ext(filename)
 	basename := filename[0 : len(filename)-len(extname)]
 
 	basename = opts.Prefix + basename + opts.Suffix
@@ -35,7 +34,7 @@ func RewriteFilename(input string, opts *RewriteOpts) string {
 	if len(opts.Dirname) != 0 {
 		dirname = opts.Dirname
 	}
-	return filepath.Join(dirname, basename+extname)
+	return Join(dirname, basename+extname)
 }
 
 // ExpandPath is similar to ExpandPathRelative with an empty `basepath`;
@@ -70,14 +69,14 @@ func expandPath(input, basepath string) (output string, err error) {
 		if err != nil {
 			return "", fmt.Errorf("failed to expand path '%v', %w", input, err)
 		}
-		output = filepath.Join(home, input[2:])
+		output = Join(home, input[2:])
 	}
 
 	output = os.ExpandEnv(output)
-	if !filepath.IsAbs(output) {
-		output = filepath.Join(basepath, output)
+	if !IsAbs(output) {
+		output = Join(basepath, output)
 	}
-	output, err = filepath.Abs(output)
+	output, err = Abs(output)
 	if err != nil {
 		return "", fmt.Errorf("failed to expand path '%v', %w", input, err)
 	}
