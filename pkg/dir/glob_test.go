@@ -5,6 +5,7 @@ import (
 	"io/ioutil"
 	"os"
 	"path"
+	"runtime"
 	"testing"
 
 	"github.com/maargenton/go-testpredicate/pkg/require"
@@ -155,9 +156,16 @@ func TestGlobStarFromCurrentDirectory(t *testing.T) {
 }
 
 func TestGlobFromSystemRoot(t *testing.T) {
-	matches, err := dir.Glob("/d*")
-	require.That(t, err).IsNil()
-	require.That(t, matches).Contains([]string{"/dev/"})
+	if runtime.GOOS == "windows" {
+		matches, err := dir.Glob("C:/Pro*")
+		require.That(t, err).IsNil()
+		require.That(t, matches).Contains([]string{"C:/Program Files/"})
+
+	} else {
+		matches, err := dir.Glob("/d*")
+		require.That(t, err).IsNil()
+		require.That(t, matches).Contains([]string{"/dev/"})
+	}
 }
 
 // func TestGlobFromSystemRoot2(t *testing.T) {
