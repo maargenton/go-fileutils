@@ -97,7 +97,7 @@ func TestWindowsClean(t *testing.T) {
 // ---------------------------------------------------------------------------
 // fileutils.Split
 
-func TestSplit(t *testing.T) {
+func TestWindowsSplit(t *testing.T) {
 	var tcs = []struct {
 		path, dir, base string
 	}{
