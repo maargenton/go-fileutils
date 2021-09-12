@@ -1,3 +1,5 @@
+//go:build !windows
+
 package fileutils_test
 
 import (
