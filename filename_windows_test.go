@@ -1,4 +1,4 @@
-//go:build !windows
+//go:build windows
 
 package fileutils_test
 
@@ -29,21 +29,21 @@ func setupTestEnv(env map[string]string) func() {
 func TestWindowsExpandPath(t *testing.T) {
 	var cleanup = setupTestEnv(map[string]string{
 		"FOOBAR":    "foo/bar/foobar",
-		"FOOBARABS": "/foo/bar/foobar",
+		"FOOBARABS": "C:/foo/bar/foobar",
 	})
 	defer cleanup()
 
 	var tcs = []struct {
 		input, output string
 	}{
-		{"/.alek", "/.alek"},
-		{"/foo/bar/foobar", "/foo/bar/foobar"},
+		{"C:/.alek", "C:/.alek"},
+		{"C:/foo/bar/foobar", "C:/foo/bar/foobar"},
 
-		{"$FOOBARABS/.alek", "/foo/bar/foobar/.alek"},
-		{"${FOOBARABS}/.alek", "/foo/bar/foobar/.alek"},
+		{"$FOOBARABS/.alek", "C:/foo/bar/foobar/.alek"},
+		{"${FOOBARABS}/.alek", "C:/foo/bar/foobar/.alek"},
 
-		{"/tmp/$FOOBAR/.alek", "/tmp/foo/bar/foobar/.alek"},
-		{"/tmp/${FOOBAR}/.alek", "/tmp/foo/bar/foobar/.alek"},
+		{"C:/tmp/$FOOBAR/.alek", "C:/tmp/foo/bar/foobar/.alek"},
+		{"C:/tmp/${FOOBAR}/.alek", "C:/tmp/foo/bar/foobar/.alek"},
 	}
 
 	for _, tc := range tcs {
@@ -56,7 +56,9 @@ func TestWindowsExpandPath(t *testing.T) {
 }
 
 func TestWindowsExpandPathFromHome(t *testing.T) {
-	var tcs = []struct{ input, output string }{
+	var tcs = []struct {
+		input, output string
+	}{
 		{"~", ""},
 		{"~/", ""},
 		{"~/.alek", ".alek"},
@@ -102,16 +104,15 @@ func TestWindowsExpandPathRelative(t *testing.T) {
 	var tcs = []struct {
 		input, basepath, output string
 	}{
-		{".alek", "/usr/local/share", "/usr/local/share/.alek"},
-		{"foo/bar/foobar", "/usr/local/share", "/usr/local/share/foo/bar/foobar"},
-		{"/foo/bar/foobar", "/usr/local/share", "/foo/bar/foobar"},
+		{".alek", "C:/usr/local/share", "C:/usr/local/share/.alek"},
+		{"foo/bar/foobar", "C:/usr/local/share", "C:/usr/local/share/foo/bar/foobar"},
+		{"C:/foo/bar/foobar", "C:/usr/local/share", "C:/foo/bar/foobar"},
 	}
 
-	// var pwd, _ = os.Getwd()
 	for _, tc := range tcs {
 		t.Run(fmt.Sprintf("ExpandPathRelative(%#+v,%#+v)", tc.input, tc.basepath), func(t *testing.T) {
 			output, err := fileutils.ExpandPathRelative(tc.input, tc.basepath)
-			expected := tc.output //fileutils.Join(pwd, tc.output)
+			expected := tc.output
 
 			require.That(t, err).IsNil()
 			require.That(t, output).Eq(expected)

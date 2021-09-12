@@ -56,7 +56,9 @@ func TestUnixExpandPath(t *testing.T) {
 }
 
 func TestUnixExpandPathFromHome(t *testing.T) {
-	var tcs = []struct{ input, output string }{
+	var tcs = []struct {
+		input, output string
+	}{
 		{"~", ""},
 		{"~/", ""},
 		{"~/.alek", ".alek"},
@@ -75,7 +77,9 @@ func TestUnixExpandPathFromHome(t *testing.T) {
 }
 
 func TestUnixExpandPathFromPwd(t *testing.T) {
-	var tcs = []struct{ input, output string }{
+	var tcs = []struct {
+		input, output string
+	}{
 		{".alek", ".alek"},
 		{"foo/bar/foobar", "foo/bar/foobar"},
 	}
