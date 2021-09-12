@@ -3,6 +3,7 @@ package fileutils
 import (
 	"fmt"
 	"os"
+	"runtime"
 	"strings"
 )
 
@@ -56,7 +57,11 @@ func ExpandPathRelative(input, basepath string) (output string, err error) {
 
 func expandPath(input, basepath string) (output string, err error) {
 	output = Clean(input)
-	output = strings.ReplaceAll(output, "~/", "${HOME}/")
+	if runtime.GOOS == "windows" {
+		output = strings.ReplaceAll(output, "~/", "${USERPROFILE}/")
+	} else {
+		output = strings.ReplaceAll(output, "~/", "${HOME}/")
+	}
 	output = os.ExpandEnv(output)
 	if !IsAbs(output) {
 		output = Join(basepath, output)
