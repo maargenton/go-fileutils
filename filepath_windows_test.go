@@ -264,6 +264,8 @@ func TestWindowsAbs(t *testing.T) {
 		input, prefix, suffix string
 	}{
 		{"/tmp/foo", "", "/tmp/foo"},
+		{"C:\\Program Files\\Windows", "C:/Program Files/Windows", "C:/Program Files/Windows"},
+		{"C:\\Program Files\\Windows\\", "C:/Program Files/Windows/", "C:/Program Files/Windows/"},
 	}
 
 	for _, tc := range tcs {
