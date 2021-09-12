@@ -75,10 +75,8 @@ func TestWalkFromFsRoot(t *testing.T) {
 		err := fileutils.Walk("", "C:/", f)
 		verify.That(t, err).IsError(nil)
 		verify.That(t, records).IsSupersetOf([]string{
-			"C:/bin/",
-			"C:/dev/",
-			"C:/sbin/",
-			"C:/usr/",
+			"C:/Documents and Settings/",
+			"C:/Program Files/",
 		})
 		verify.That(t, records).IsDisjointSetFrom([]string{
 			"C:/",
