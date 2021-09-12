@@ -217,6 +217,30 @@ func TestAbs(t *testing.T) {
 // ---------------------------------------------------------------------------
 
 // ---------------------------------------------------------------------------
+// fileutils.EvalSymlinks
+func TestEvalSymlinks(t *testing.T) {
+	var tcs = []struct {
+		input, output string
+	}{
+		{"testdata/src", "testdata/src"},
+		{"testdata/src/", "testdata/src/"},
+		{"testdata/dst", "testdata/src"},
+		{"testdata/dst/", "testdata/src/"},
+	}
+
+	for _, tc := range tcs {
+		t.Run(fmt.Sprintf("EvalSymlinks(%#+v)", tc.input), func(t *testing.T) {
+			output, err := fileutils.EvalSymlinks(tc.input)
+			require.That(t, err).IsNil()
+			require.That(t, output).Eq(tc.output)
+		})
+	}
+}
+
+// fileutils.EvalSymlinks
+// ---------------------------------------------------------------------------
+
+// ---------------------------------------------------------------------------
 // fileutils.Rel
 func TestRel(t *testing.T) {
 	var tcs = []struct {
