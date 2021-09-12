@@ -194,6 +194,30 @@ func TestJoin(t *testing.T) {
 // ---------------------------------------------------------------------------
 
 // ---------------------------------------------------------------------------
+// fileutils.Abs
+func TestAbs(t *testing.T) {
+	var tcs = []struct {
+		input, prefix, suffix string
+	}{
+		{"testdata/src", "", "testdata/src"},
+		{"testdata/src/", "", "testdata/src/"},
+		{"/tmp/foo", "/tmp/foo", "/tmp/foo"},
+	}
+
+	for _, tc := range tcs {
+		t.Run(fmt.Sprintf("Abs(%#+v)", tc.input), func(t *testing.T) {
+			output, err := fileutils.Abs(tc.input)
+			require.That(t, err).IsNil()
+			require.That(t, output).StartsWith(tc.prefix)
+			require.That(t, output).EndsWith(tc.suffix)
+		})
+	}
+}
+
+// fileutils.Abs
+// ---------------------------------------------------------------------------
+
+// ---------------------------------------------------------------------------
 // fileutils.Rel
 func TestRel(t *testing.T) {
 	var tcs = []struct {

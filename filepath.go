@@ -134,8 +134,31 @@ func VolumeName(path string) string {
 // filesystem to evaluate their result.
 // ---------------------------------------------------------------------------
 
-// func Abs(path string) (string, error)
-// func EvalSymlinks(path string) (string, error)
+// Abs is equivalent to `filepath.Abs()`, but preserves any trailing path
+// separator.
+func Abs(path string) (string, error) {
+	output, err := filepath.Abs(path)
+	if err == nil {
+		output = Clean(output)
+		if IsDirectoryName(path) && !hasTrailingSeparator(output) {
+			output += string(Separator)
+		}
+	}
+	return output, err
+}
+
+// EvalSymlinks is equivalent to `filepath.EvalSymlinks()`, but preserves any
+// trailing path separator.
+func EvalSymlinks(path string) (string, error) {
+	output, err := filepath.EvalSymlinks(path)
+	if err == nil {
+		output = Clean(output)
+		if IsDirectoryName(path) && !hasTrailingSeparator(output) {
+			output += string(Separator)
+		}
+	}
+	return output, err
+}
 
 // Rel is equivalent to `filepath.Rel()`, but preserves any trailing path
 // separator.
