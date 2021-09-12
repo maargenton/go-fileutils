@@ -6,6 +6,7 @@ import (
 
 	"github.com/maargenton/go-fileutils"
 	"github.com/maargenton/go-testpredicate/pkg/require"
+	"github.com/maargenton/go-testpredicate/pkg/verify"
 )
 
 func TestWindowsOnly(t *testing.T) {
