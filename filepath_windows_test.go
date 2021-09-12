@@ -164,7 +164,7 @@ func TestWindowsIsAbs(t *testing.T) {
 		abs   bool
 	}{
 		{"path/to/file", false},
-		{"/path/to/file", true},
+		{"/path/to/file", false},
 		{"c:/path/to/file", true},
 		{"//hostname/volume/path/to/file", true},
 	}
