@@ -34,25 +34,14 @@ func TestIsDirectoryName(t *testing.T) {
 	}
 
 	for _, tc := range tcs {
-		t.Run(fmt.Sprintf("Given %#+v", tc.path), func(t *testing.T) {
-			t.Run("when calling IsDirectoryName", func(t *testing.T) {
-				dir := fileutils.IsDirectoryName(tc.path)
-				t.Run(fmt.Sprintf("then result is %#+v", tc.expected), func(t *testing.T) {
-					require.That(t, dir,
-						require.Context{Name: "path", Value: tc.path},
-					).Eq(tc.expected)
-				})
-			})
+		t.Run(fmt.Sprintf("IsDirectoryName(%#+v)", tc.path), func(t *testing.T) {
+			dir := fileutils.IsDirectoryName(tc.path)
+			require.That(t, dir).Eq(tc.expected)
 		})
 	}
 }
 
 // fileutils.IsDirectoryName
-// ---------------------------------------------------------------------------
-
-// ---------------------------------------------------------------------------
-// fileutils.Base
-// fileutils.Base
 // ---------------------------------------------------------------------------
 
 // ---------------------------------------------------------------------------
@@ -77,13 +66,9 @@ func TestClean(t *testing.T) {
 	}
 
 	for _, tc := range tcs {
-		t.Run(fmt.Sprintf("Given %v", tc.input), func(t *testing.T) {
-			t.Run("when calling Clean", func(t *testing.T) {
-				output := fileutils.Clean(tc.input)
-				t.Run("then output match expected", func(t *testing.T) {
-					require.That(t, output).Eq(tc.output)
-				})
-			})
+		t.Run(fmt.Sprintf("Clean(%#+v)", tc.input), func(t *testing.T) {
+			output := fileutils.Clean(tc.input)
+			require.That(t, output).Eq(tc.output)
 		})
 	}
 }
@@ -92,9 +77,9 @@ func TestClean(t *testing.T) {
 // ---------------------------------------------------------------------------
 
 // ---------------------------------------------------------------------------
-// fileutils.Split
+// fileutils.Base, fileutils.Dir, fileutils.Split
 
-func TestSplit(t *testing.T) {
+func TestSplitBaeDir(t *testing.T) {
 	var tcs = []struct {
 		path, dir, base string
 	}{
@@ -111,17 +96,160 @@ func TestSplit(t *testing.T) {
 		{"/foo/bar/baz/", "/foo/bar/", "baz/"},
 		{"/foo/bar/baz/../", "/foo/bar/baz/", "../"},
 
+		// Relative paths
+		{"path/to/file", "path/to/", "file"},
+		{"file", "", "file"},
+
 		// Other
 		{"/foo/bar/../baz", "/foo/bar/../", "baz"},
 		{"/foo/bar/../baz/", "/foo/bar/../", "baz/"},
 	}
 
 	for _, tc := range tcs {
-		t.Run(fmt.Sprintf("Test Split(%#+v)", tc.path), func(t *testing.T) {
+		t.Run(fmt.Sprintf("Split(%#+v)", tc.path), func(t *testing.T) {
 			dir, base := fileutils.Split(tc.path)
 			r := []string{dir, base}
 			verify.That(t, r).Eq([]string{tc.dir, tc.base})
 		})
 	}
+
+	// Dir() and Base() should return the same result as the first or second
+	// result of Split(), respectively
+	for _, tc := range tcs {
+		t.Run(fmt.Sprintf("Dir(%#+v)", tc.path), func(t *testing.T) {
+			dir := fileutils.Dir(tc.path)
+			verify.That(t, dir).Eq(tc.dir)
+		})
+	}
+
+	for _, tc := range tcs {
+		t.Run(fmt.Sprintf("Base(%#+v)", tc.path), func(t *testing.T) {
+			base := fileutils.Base(tc.path)
+			verify.That(t, base).Eq(tc.base)
+		})
+	}
 }
 
+// fileutils.Base, fileutils.Dir, fileutils.Split
+// ---------------------------------------------------------------------------
+
+// ---------------------------------------------------------------------------
+// fileutils.Ext
+
+func TestExt(t *testing.T) {
+	var tcs = []struct {
+		input, output string
+	}{
+		{"foo.cpp", ".cpp"},
+		{"foo.cpp.o", ".o"},
+		{"foo.cpp.d/", ""},
+		{"path/to/foo.cpp", ".cpp"},
+		{"path/to/foo.cpp.o", ".o"},
+		{"path/to/foo.cpp.d/", ""},
+	}
+
+	for _, tc := range tcs {
+		t.Run(fmt.Sprintf("Ext(%#+v)", tc.input), func(t *testing.T) {
+			output := fileutils.Ext(tc.input)
+			require.That(t, output).Eq(tc.output)
+		})
+	}
+}
+
+// fileutils.Ext
+// ---------------------------------------------------------------------------
+
+// ---------------------------------------------------------------------------
+// fileutils.FromSlash
+
+func TestFromSlash(t *testing.T) {
+	var tcs = []struct {
+		input, output string
+	}{
+		{"path/to/file", "path/to/file"},
+		{"path/to/dir/", "path/to/dir/"},
+		{"/path/to/file", "/path/to/file"},
+		{"/path/to/dir/", "/path/to/dir/"},
+	}
+
+	for _, tc := range tcs {
+		t.Run(fmt.Sprintf("FromSlash(%#+v)", tc.input), func(t *testing.T) {
+			output := fileutils.FromSlash(tc.input)
+			require.That(t, output).Eq(tc.output)
+		})
+	}
+}
+
+// fileutils.FromSlash
+// ---------------------------------------------------------------------------
+
+// ---------------------------------------------------------------------------
+// fileutils.IsAbs
+
+func TestIsAbs(t *testing.T) {
+	var tcs = []struct {
+		input string
+		abs   bool
+	}{
+		{"path/to/file", false},
+		{"/path/to/file", true},
+	}
+
+	for _, tc := range tcs {
+		t.Run(fmt.Sprintf("IsAbs(%#+v)", tc.input), func(t *testing.T) {
+			abs := fileutils.IsAbs(tc.input)
+			require.That(t, abs).Eq(tc.abs)
+		})
+	}
+}
+
+// fileutils.IsAbs
+// ---------------------------------------------------------------------------
+
+// ---------------------------------------------------------------------------
+// fileutils.ToSlash
+
+func TestToSlash(t *testing.T) {
+	var tcs = []struct {
+		input, output string
+	}{
+		{"path/to/file", "path/to/file"},
+		{"path/to/dir/", "path/to/dir/"},
+		{"/path/to/file", "/path/to/file"},
+		{"/path/to/dir/", "/path/to/dir/"},
+	}
+
+	for _, tc := range tcs {
+		t.Run(fmt.Sprintf("ToSlash(%#+v)", tc.input), func(t *testing.T) {
+			output := fileutils.ToSlash(tc.input)
+			require.That(t, output).Eq(tc.output)
+		})
+	}
+}
+
+// fileutils.ToSlash
+// ---------------------------------------------------------------------------
+
+// ---------------------------------------------------------------------------
+// fileutils.VolumeName
+
+func TestVolumeName(t *testing.T) {
+	var tcs = []struct {
+		input, output string
+	}{
+		{"path/to/file", ""},
+		{"path/to/dir/", ""},
+		{"/path/to/file", ""},
+		{"/path/to/dir/", ""},
+	}
+
+	for _, tc := range tcs {
+		t.Run(fmt.Sprintf("VolumeName(%#+v)", tc.input), func(t *testing.T) {
+			output := fileutils.VolumeName(tc.input)
+			require.That(t, output).Eq(tc.output)
+		})
+	}
+}
+
+// fileutils.VolumeName
+// ---------------------------------------------------------------------------

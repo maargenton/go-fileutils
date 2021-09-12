@@ -38,8 +38,10 @@ func IsDirectoryName(path string) bool {
 		strings.HasSuffix(path, "..") && IsPathSeparator(path[len(path)-3])
 }
 
+// Base returns the second part of Split().
 func Base(path string) string {
-	return Clean(filepath.Base(path))
+	_, base := Split(path)
+	return base
 }
 
 // Clean returns a lexically equivalent path, using '/' as separator, removing
@@ -58,8 +60,10 @@ func hasTrailingSeparator(path string) bool {
 	return len(path) > 0 && IsPathSeparator(path[len(path)-1])
 }
 
+// Dir returns the first part of Split().
 func Dir(path string) string {
-	return filepath.Dir(path)
+	dir, _ := Split(path)
+	return dir
 }
 
 func Ext(path string) string {
@@ -107,7 +111,7 @@ func ToSlash(path string) string {
 }
 
 func VolumeName(path string) string {
-	return filepath.VolumeName(path)
+	return ToSlash(filepath.VolumeName(path))
 }
 
 // func Abs(path string) (string, error)
