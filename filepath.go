@@ -143,6 +143,7 @@ func Rel(basepath, targetpath string) (string, error) {
 	output, err := filepath.Rel(basepath, targetpath)
 
 	if err == nil {
+		output = Clean(output)
 		if IsDirectoryName(targetpath) && !hasTrailingSeparator(output) {
 			output += string(filepath.Separator)
 		}
