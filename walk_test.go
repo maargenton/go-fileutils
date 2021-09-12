@@ -4,6 +4,7 @@ import (
 	"io/fs"
 	"io/ioutil"
 	"os"
+	"runtime"
 	"testing"
 
 	"github.com/maargenton/go-testpredicate/pkg/require"
@@ -70,17 +71,33 @@ func TestWalkFromFsRoot(t *testing.T) {
 	var records []string
 	var f = makeWalkDirPathRecorder(&records, skipDirFunc)
 
-	err := fileutils.Walk("", "/", f)
-	verify.That(t, err).IsError(nil)
-	verify.That(t, records).IsSupersetOf([]string{
-		"/bin/",
-		"/dev/",
-		"/sbin/",
-		"/usr/",
-	})
-	verify.That(t, records).IsDisjointSetFrom([]string{
-		"/",
-	})
+	if runtime.GOOS == "windows" {
+		err := fileutils.Walk("", "C:/", f)
+		verify.That(t, err).IsError(nil)
+		verify.That(t, records).IsSupersetOf([]string{
+			"C:/bin/",
+			"C:/dev/",
+			"C:/sbin/",
+			"C:/usr/",
+		})
+		verify.That(t, records).IsDisjointSetFrom([]string{
+			"C:/",
+		})
+
+	} else {
+		err := fileutils.Walk("", "/", f)
+		verify.That(t, err).IsError(nil)
+		verify.That(t, records).IsSupersetOf([]string{
+			"/bin/",
+			"/dev/",
+			"/sbin/",
+			"/usr/",
+		})
+		verify.That(t, records).IsDisjointSetFrom([]string{
+			"/",
+		})
+
+	}
 }
 
 func TestSymlinks(t *testing.T) {
