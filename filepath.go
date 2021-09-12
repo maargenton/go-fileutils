@@ -66,6 +66,7 @@ func Dir(path string) string {
 	return dir
 }
 
+// Ext return the filename extension of path if any.
 func Ext(path string) string {
 	return filepath.Ext(path)
 }
@@ -111,22 +112,50 @@ func Split(path string) (dir, base string) {
 	return
 }
 
+// ToNative converts path to its platform native representation
 func ToNative(path string) string {
 	return filepath.FromSlash(path)
 }
 
+// ToSlash converts path into a path using '/' as path separator, consistent
+// with other functions in this package.
 func ToSlash(path string) string {
 	return filepath.ToSlash(path)
 }
 
+// VolumeName returns the name of the volume if specified in path. The result is
+// always empty on unix platforms.
 func VolumeName(path string) string {
 	return ToSlash(filepath.VolumeName(path))
 }
 
+// ---------------------------------------------------------------------------
+// Filename manipulation function that might need to access the underlying
+// filesystem to evaluate their result.
+// ---------------------------------------------------------------------------
+
 // func Abs(path string) (string, error)
 // func EvalSymlinks(path string) (string, error)
-// func Glob(pattern string) (matches []string, err error)
+
+// Rel is equivalent to `filepath.Rel()`, but preserves any trailing path
+// separator.
+func Rel(basepath, targetpath string) (string, error) {
+	output, err := filepath.Rel(basepath, targetpath)
+
+	if err == nil {
+		if IsDirectoryName(targetpath) && !hasTrailingSeparator(output) {
+			output += string(filepath.Separator)
+		}
+	}
+	return output, err
+}
+
+// ---------------------------------------------------------------------------
+// Functions from "path/filepath" that don't have a direct equivalent in this
+// package.
+// ---------------------------------------------------------------------------
+
 // func Match(pattern, name string) (matched bool, err error)
-// func Rel(basepath, targpath string) (string, error)
+// func Glob(pattern string) (matches []string, err error)
 // func Walk(root string, fn WalkFunc) error
 // func WalkDir(root string, fn fs.WalkDirFunc) error

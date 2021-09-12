@@ -185,3 +185,35 @@ func TestJoin(t *testing.T) {
 
 // fileutils.Join
 // ---------------------------------------------------------------------------
+
+// ---------------------------------------------------------------------------
+// ---------------------------------------------------------------------------
+// Filename manipulation function that might need to access the underlying
+// filesystem to evaluate their result.
+// ---------------------------------------------------------------------------
+// ---------------------------------------------------------------------------
+
+// ---------------------------------------------------------------------------
+// fileutils.Rel
+func TestRel(t *testing.T) {
+	var tcs = []struct {
+		basepath, targetpath, output string
+	}{
+		{"testdata", "testdata/src", "src"},
+		{"testdata/", "testdata/src", "src"},
+		{"testdata/", "testdata/src/", "src/"},
+		{"/", "/testdata/src/", "testdata/src/"},
+		{"/testdata", "/testdata/src/", "src/"},
+	}
+
+	for _, tc := range tcs {
+		t.Run(fmt.Sprintf("Rel(%#+v, %#+v)", tc.basepath, tc.targetpath), func(t *testing.T) {
+			output, err := fileutils.Rel(tc.basepath, tc.targetpath)
+			require.That(t, err).IsNil()
+			require.That(t, output).Eq(tc.output)
+		})
+	}
+}
+
+// fileutils.Rel
+// ---------------------------------------------------------------------------

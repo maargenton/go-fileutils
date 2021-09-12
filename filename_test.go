@@ -12,35 +12,6 @@ package fileutils_test
 // )
 
 // // ---------------------------------------------------------------------------
-// // fileutils.Rel
-// func TestRel(t *testing.T) {
-// 	var tcs = []struct {
-// 		basepath, targetpath, output string
-// 	}{
-// 		{"testdata", "testdata/src", "src"},
-// 		{"testdata/", "testdata/src", "src"},
-// 		{"testdata/", "testdata/src/", "src/"},
-// 		{"/", "/testdata/src/", "testdata/src/"},
-// 		{"/testdata", "/testdata/src/", "src/"},
-// 	}
-
-// 	for _, tc := range tcs {
-// 		t.Run(fmt.Sprintf("Given %v + %v", tc.basepath, tc.targetpath), func(t *testing.T) {
-// 			t.Run("when calling Clean", func(t *testing.T) {
-// 				output, err := fileutils.Rel(tc.basepath, tc.targetpath)
-// 				require.That(t, err).IsNil()
-// 				t.Run("then output match expected", func(t *testing.T) {
-// 					require.That(t, output).Eq(tc.output)
-// 				})
-// 			})
-// 		})
-// 	}
-// }
-
-// // fileutils.Rel
-// // ---------------------------------------------------------------------------
-
-// // ---------------------------------------------------------------------------
 // // fileutils.Join
 
 // func TestJoin(t *testing.T) {

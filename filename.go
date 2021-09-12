@@ -7,22 +7,6 @@ import (
 	"strings"
 )
 
-// ---------------------------------------------------------------------------
-// Local wrappers of filepath package function, preserving trailing path
-// separator, commonly used to indicate a directory.
-
-// Rel is equivalent to `filepath.Rel()`, but preserves any trailing path
-// separator.
-func Rel(basepath, targetpath string) (string, error) {
-	output, err := filepath.Rel(basepath, targetpath)
-	if err == nil && hasTrailingSeparator(targetpath) && !hasTrailingSeparator(output) {
-		output += string(filepath.Separator)
-	}
-	return output, err
-}
-
-// ---------------------------------------------------------------------------
-
 // RewriteOpts contains the options to apply to RewriteFilename to transform the
 // input filename
 type RewriteOpts struct {
