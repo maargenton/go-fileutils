@@ -32,7 +32,7 @@ func IsPathSeparator(c uint8) bool {
 // "./", or paths the end with either a "." or ".." path fragment that are
 // always directories.
 func IsDirectoryName(path string) bool {
-	return path == "" || path == "." || path == ".." ||
+	return path == "" || path == "." || path == ".." || path == "~" ||
 		IsPathSeparator(path[len(path)-1]) ||
 		strings.HasSuffix(path, ".") && IsPathSeparator(path[len(path)-2]) ||
 		strings.HasSuffix(path, "..") && IsPathSeparator(path[len(path)-3])

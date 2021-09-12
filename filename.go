@@ -55,23 +55,8 @@ func ExpandPathRelative(input, basepath string) (output string, err error) {
 }
 
 func expandPath(input, basepath string) (output string, err error) {
-	if input == "~" || input == "~/" {
-		output, err = os.UserHomeDir()
-		if err != nil {
-			err = fmt.Errorf("failed to expand path '%v', %w", input, err)
-		}
-		return
-	}
-
-	output = input
-	if strings.HasPrefix(input, "~/") {
-		home, err := os.UserHomeDir()
-		if err != nil {
-			return "", fmt.Errorf("failed to expand path '%v', %w", input, err)
-		}
-		output = Join(home, input[2:])
-	}
-
+	output = Clean(input)
+	output = strings.ReplaceAll(output, "~/", "${HOME}/")
 	output = os.ExpandEnv(output)
 	if !IsAbs(output) {
 		output = Join(basepath, output)
@@ -80,6 +65,5 @@ func expandPath(input, basepath string) (output string, err error) {
 	if err != nil {
 		return "", fmt.Errorf("failed to expand path '%v', %w", input, err)
 	}
-
 	return
 }

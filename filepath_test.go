@@ -63,6 +63,7 @@ func TestClean(t *testing.T) {
 		{".", "./"},
 		{"./", "./"},
 		{"", "./"},
+		{"~", "~/"},
 	}
 
 	for _, tc := range tcs {

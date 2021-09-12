@@ -2,7 +2,6 @@ package fileutils_test
 
 import (
 	"os"
-	"path/filepath"
 	"testing"
 
 	"github.com/maargenton/go-testpredicate/pkg/require"
@@ -90,7 +89,7 @@ func TestExpandPathFromHome(t *testing.T) {
 	for _, tc := range tcs {
 		t.Run(tc.input, func(t *testing.T) {
 			output, err := fileutils.ExpandPath(tc.input)
-			expected := filepath.Join(home, tc.output)
+			expected := fileutils.Join(home, tc.output)
 
 			require.That(t, err).IsNil()
 			require.That(t, output).Eq(expected)
@@ -108,7 +107,7 @@ func TestExpandPathFromPwd(t *testing.T) {
 	for _, tc := range tcs {
 		t.Run(tc.input, func(t *testing.T) {
 			output, err := fileutils.ExpandPath(tc.input)
-			expected := filepath.Join(pwd, tc.output)
+			expected := fileutils.Join(pwd, tc.output)
 
 			require.That(t, err).IsNil()
 			require.That(t, output).Eq(expected)
@@ -133,7 +132,7 @@ func TestExpandPathRelative(t *testing.T) {
 	for _, tc := range tcs {
 		t.Run(tc.input, func(t *testing.T) {
 			output, err := fileutils.ExpandPathRelative(tc.input, tc.basepath)
-			expected := tc.output //filepath.Join(pwd, tc.output)
+			expected := tc.output //fileutils.Join(pwd, tc.output)
 
 			require.That(t, err).IsNil()
 			require.That(t, output).Eq(expected)
@@ -151,7 +150,7 @@ func TestExpandPathRelativeFromPwd(t *testing.T) {
 	for _, tc := range tcs {
 		t.Run(tc.input, func(t *testing.T) {
 			output, err := fileutils.ExpandPathRelative(tc.input, tc.basepath)
-			expected := filepath.Join(pwd, tc.output)
+			expected := fileutils.Join(pwd, tc.output)
 
 			require.That(t, err).IsNil()
 			require.That(t, output).Eq(expected)
