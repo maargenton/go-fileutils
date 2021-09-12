@@ -6,6 +6,7 @@ import (
 
 	"github.com/maargenton/go-fileutils"
 	"github.com/maargenton/go-testpredicate/pkg/require"
+	"github.com/maargenton/go-testpredicate/pkg/verify"
 )
 
 // ---------------------------------------------------------------------------
@@ -89,3 +90,38 @@ func TestClean(t *testing.T) {
 
 // fileutils.Clean
 // ---------------------------------------------------------------------------
+
+// ---------------------------------------------------------------------------
+// fileutils.Split
+
+func TestSplit(t *testing.T) {
+	var tcs = []struct {
+		path, dir, base string
+	}{
+		// Matching filepath.Split()
+		{"", "", ""},
+		{"/dev", "/", "dev"},
+		{"//", "/", ""},
+		{"///", "/", ""},
+		{"/foo/bar/baz", "/foo/bar/", "baz"},
+		{"/foo/bar/baz/..", "/foo/bar/baz/", "../"},
+
+		// Matching filepath.Split(), presered trailing sep
+		{"/dev/", "/", "dev/"},
+		{"/foo/bar/baz/", "/foo/bar/", "baz/"},
+		{"/foo/bar/baz/../", "/foo/bar/baz/", "../"},
+
+		// Other
+		{"/foo/bar/../baz", "/foo/bar/../", "baz"},
+		{"/foo/bar/../baz/", "/foo/bar/../", "baz/"},
+	}
+
+	for _, tc := range tcs {
+		t.Run(fmt.Sprintf("Test Split(%#+v)", tc.path), func(t *testing.T) {
+			dir, base := fileutils.Split(tc.path)
+			r := []string{dir, base}
+			verify.That(t, r).Eq([]string{tc.dir, tc.base})
+		})
+	}
+}
+

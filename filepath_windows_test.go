@@ -93,3 +93,27 @@ func TestWindowsClean(t *testing.T) {
 
 // fileutils.Clean
 // ---------------------------------------------------------------------------
+
+// ---------------------------------------------------------------------------
+// fileutils.Split
+
+func TestSplit(t *testing.T) {
+	var tcs = []struct {
+		path, dir, base string
+	}{
+		{"C:\\Program Files\\Microsoft\\", "C:/Program Files/", "Microsoft/"},
+		{"\\\\hostname\\volume\\path\\to\\file", "//hostname/volume/path/to/", "file"},
+		{"\\\\hostname\\volume\\path\\to\\dir\\", "//hostname/volume/path/to/", "dir/"},
+	}
+
+	for _, tc := range tcs {
+		t.Run(fmt.Sprintf("Test Split(%#+v)", tc.path), func(t *testing.T) {
+			dir, base := fileutils.Split(tc.path)
+			r := []string{dir, base}
+			verify.That(t, r).Eq([]string{tc.dir, tc.base})
+		})
+	}
+}
+
+// fileutils.Split
+// ---------------------------------------------------------------------------

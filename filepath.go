@@ -22,8 +22,8 @@ type WalkFunc = fs.WalkDirFunc
 
 // IsPathSeparator returns true for runes that are either the default path
 // separator or the os native path separator.
-func IsPathSeparator(c rune) bool {
-	return c == Separator || c == OSSeparator
+func IsPathSeparator(c uint8) bool {
+	return rune(c) == Separator || rune(c) == OSSeparator
 }
 
 // IsDirectoryName returns true is the input can be inferred to be a directory
@@ -33,17 +33,18 @@ func IsPathSeparator(c rune) bool {
 // always directories.
 func IsDirectoryName(path string) bool {
 	return path == "" || path == "." || path == ".." ||
-		IsPathSeparator(rune(path[len(path)-1])) ||
-		strings.HasSuffix(path, ".") && IsPathSeparator(rune(path[len(path)-2])) ||
-		strings.HasSuffix(path, "..") && IsPathSeparator(rune(path[len(path)-3]))
+		IsPathSeparator(path[len(path)-1]) ||
+		strings.HasSuffix(path, ".") && IsPathSeparator(path[len(path)-2]) ||
+		strings.HasSuffix(path, "..") && IsPathSeparator(path[len(path)-3])
 }
 
 func Base(path string) string {
-	return filepath.Base(path)
+	return Clean(filepath.Base(path))
 }
 
-// Clean is equivalent to `filepath.Clean()`, but preserves any trailing path
-// separator or appends one for '.' or '..' path fragments.
+// Clean returns a lexically equivalent path, using '/' as separator, removing
+// any discardable '/' or "./", and collapsing any intermediate "../". It
+// preserves a trailing separator for directory names.
 func Clean(input string) string {
 	dir := IsDirectoryName(input)
 	output := filepath.ToSlash(filepath.Clean(input))
@@ -54,7 +55,7 @@ func Clean(input string) string {
 }
 
 func hasTrailingSeparator(path string) bool {
-	return len(path) > 0 && IsPathSeparator(rune(path[len(path)-1]))
+	return len(path) > 0 && IsPathSeparator(path[len(path)-1])
 }
 
 func Dir(path string) string {
@@ -81,8 +82,20 @@ func IsAbs(path string) bool {
 // 	return filepath.Join(elem...)
 // }
 
-func Split(path string) (dir, file string) {
-	return filepath.Split(path)
+// Split splits the last path fragment of `path` from everything that precedes,
+// so that path = dir+file.
+func Split(path string) (dir, base string) {
+	isDir := IsDirectoryName(path)
+	for hasTrailingSeparator(path) && len(path) > 1 {
+		path = path[:len(path)-1]
+	}
+	dir, base = filepath.Split(path)
+	dir = filepath.ToSlash(dir)
+	base = filepath.ToSlash(base)
+	if isDir && len(base) > 0 && !hasTrailingSeparator(base) {
+		base += string(Separator)
+	}
+	return
 }
 
 func SplitList(path string) []string {
