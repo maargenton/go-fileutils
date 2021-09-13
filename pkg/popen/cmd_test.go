@@ -4,7 +4,6 @@ import (
 	"bufio"
 	"context"
 	"errors"
-	"fmt"
 	"io"
 	"io/ioutil"
 	"os"
@@ -31,7 +30,7 @@ func TestCommandDirectory(t *testing.T) {
 		Command:   "pwd",
 	}
 	if runtime.GOOS == "windows" {
-		cmd.Command = "cd"
+		cmd.Command = "env"
 	}
 
 	stdout, _, err := cmd.Run(context.Background())
@@ -144,8 +143,8 @@ func TestCommandStdoutToFile(t *testing.T) {
 		}
 		return scanner.Err()
 	})
-	content, _ := ioutil.ReadFile(stdoutFile)
-	fmt.Println(string(content))
+	// content, _ := ioutil.ReadFile(stdoutFile)
+	// fmt.Println(string(content))
 	verify.That(t, linecnt).Eq(10)
 }
 
