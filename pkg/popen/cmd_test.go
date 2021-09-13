@@ -30,12 +30,15 @@ func TestCommandDirectory(t *testing.T) {
 		Command:   "pwd",
 	}
 	if runtime.GOOS == "windows" {
-		cmd.Command = "env"
+		cmd.Command = "echo $PWD"
 	}
 
 	stdout, _, err := cmd.Run(context.Background())
+	stdout = strings.TrimSpace(stdout)
+	path := fileutils.Clean(stdout)
 	verify.That(t, err).IsNil()
-	verify.That(t, stdout).StartsWith(dir) // Ignore trailing LF
+	verify.That(t, path).Eq(dir)
+
 }
 
 func TestCommandEnv(t *testing.T) {
