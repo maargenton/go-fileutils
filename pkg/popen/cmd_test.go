@@ -29,16 +29,21 @@ func TestCommandDirectory(t *testing.T) {
 		Directory: dir,
 		Command:   "pwd",
 	}
-	if runtime.GOOS == "windows" {
-		cmd.Command = "echo"
-		cmd.Arguments = []string{"$PWD"}
-	}
 
 	stdout, _, err := cmd.Run(context.Background())
 	stdout = strings.TrimSpace(stdout)
 	path := fileutils.Clean(stdout)
 	verify.That(t, err).IsNil()
-	verify.That(t, path).Eq(dir)
+
+	if runtime.GOOS == "windows" {
+		// On windows, `pwd` is part of some unix tools extensions that may
+		// modify filenames to look like unix filepath; e.g.: /c/foo instead of
+		// c:\\foo.
+		expected := dir[3:]
+		verify.That(t, path).EndsWith(expected)
+	} else {
+		verify.That(t, path).Eq(dir)
+	}
 
 }
 
