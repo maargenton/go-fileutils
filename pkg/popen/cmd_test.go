@@ -30,7 +30,8 @@ func TestCommandDirectory(t *testing.T) {
 		Command:   "pwd",
 	}
 	if runtime.GOOS == "windows" {
-		cmd.Command = "echo $PWD"
+		cmd.Command = "echo"
+		cmd.Arguments = []string{"$PWD"}
 	}
 
 	stdout, _, err := cmd.Run(context.Background())
