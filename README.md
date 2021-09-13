@@ -9,7 +9,7 @@ A collection of filesystem utilities for Go
   https://img.shields.io/github/workflow/status/maargenton/go-fileutils/build?label=build&logo=github&logoColor=aaaaaa)](
   https://github.com/maargenton/go-fileutils/actions?query=branch%3Amaster)
 [![Codecov](
-  https://img.shields.io/codecov/c/github/maargenton/go-fileutils?label=codecov&logo=codecov&logoColor=aaaaaa&token=fVZ3ZMAgfo)](
+  https://img.shields.io/codecov/c/github/maargenton/go-fileutils?label=codecov&logo=codecov&logoColor=aaaaaa&token=QIZv4J0ziT)](
   https://codecov.io/gh/maargenton/go-fileutils)
 [![Go Report Card](
   https://goreportcard.com/badge/github.com/maargenton/go-fileutils)](
