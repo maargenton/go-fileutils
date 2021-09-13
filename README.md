@@ -20,22 +20,33 @@ A collection of filesystem utilities for Go
 
 Package `fileutils` is a collection of filename manipulation and filesystem
 utilities including directory traversal with symlinks support, finding file and
-folders with extended glob pattern, and atomic file operations. It also provides
-a similar set of functions as the "path/filepath" package, but:
-- Always uses '/' as path separator in all returned filenames, as this is the
-  default for unix platforms and compatible with windows.
-- Preserves a trailing separator if present, as this is commonly used to
-  differentiate between and file name and a directory name.
+folders with extended glob pattern, and atomic file operations.
 
-> **NOTE:** This package is directly usable on all Unix-like operating systems,
-> and its API is now stable as of v0.5.0 -- Windows support still requires more
-> work.
+To help support non-unix platforms, it also includes ad set of functions that
+are similar to those found in package "path/filepath", but represents all path
+using '/' as a separator, and preserves a trailing path separator commonly used
+to represent directory names.
+
 
 ## Installation
 
     go get github.com/maargenton/go-fileutils
 
 ## Key features
+
+### Filenames with consistent '/' separator
+
+All unix platforms use '/' as path separator, and while windows recommends using
+`\\`, it also accepts paths with regular forward slash as path separators. For
+that reason, this package takes the stance of always using forward slash as path
+separator. The immediate benefit is that all relative paths become platform
+agnostic, freeing the cross-platform client code from having to deal with
+special cases for windows.
+
+The notion of absolute path remains different across platforms, but they can
+still be manipulated safely and consistently without having to deal with
+platform-specific special cases in most instances.
+
 
 ### Atomic file operations
 
@@ -67,7 +78,7 @@ a similar set of functions as the "path/filepath" package, but:
 
 ### Filesystem scanning and globing
 
-`fileutils.WalkDir()` implements an enhanced version of `filepath.WalkDir()` that
+`fileutils.Walk()` implements an enhanced version of `filepath.WalkDir()` that
 follows symlinks safely and adds some flexibility in the way paths are reported.
 
 `dir.Glob()` and `dir.Scan()` are convenient functions to locate and
