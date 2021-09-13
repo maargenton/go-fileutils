@@ -28,7 +28,6 @@ import (
 	"net/url"
 	"os"
 	"path"
-	"path/filepath"
 	"sync"
 
 	"github.com/maargenton/go-errors"
@@ -152,7 +151,7 @@ func (c *Client) Get(ctx context.Context, r *Request) error {
 	if r.ProgressHandler != nil && r.ContentReader == nil {
 		downloader.progress = r.ProgressHandler
 	}
-	os.MkdirAll(filepath.Dir(filename), os.ModePerm)
+	os.MkdirAll(fileutils.Dir(filename), os.ModePerm)
 	if err := downloader.resume(); err != nil {
 		return err
 	}
@@ -200,7 +199,7 @@ func hashFileContent(filename string, h hash.Hash) error {
 
 func (c *Client) expandOutputPath(r *Request) error {
 	var err error
-	if filepath.Base(r.OutputFilename) != r.OutputFilename {
+	if fileutils.Base(r.OutputFilename) != r.OutputFilename {
 
 		// OutputFilename has a path component, expand relative to current
 		// directory
@@ -210,7 +209,7 @@ func (c *Client) expandOutputPath(r *Request) error {
 				"failed to expand output filename '%v', %w",
 				r.OutputFilename, err)
 		}
-		r.OutputDirectory = filepath.Dir(r.OutputFilename)
+		r.OutputDirectory = fileutils.Dir(r.OutputFilename)
 	} else {
 
 		// OutputFilename has a path component, expand relative to output
@@ -226,7 +225,7 @@ func (c *Client) expandOutputPath(r *Request) error {
 			return ErrLocalFileError.Errorf(
 				"failed to expand output directory '%v', %w", r.OutputDirectory, err)
 		}
-		r.OutputFilename = filepath.Join(r.OutputDirectory, r.OutputFilename)
+		r.OutputFilename = fileutils.Join(r.OutputDirectory, r.OutputFilename)
 	}
 	return nil
 }
