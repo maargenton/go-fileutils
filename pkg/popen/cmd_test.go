@@ -8,6 +8,7 @@ import (
 	"io"
 	"io/ioutil"
 	"os"
+	"runtime"
 	"strings"
 	"testing"
 
@@ -28,6 +29,9 @@ func TestCommandDirectory(t *testing.T) {
 	var cmd = popen.Command{
 		Directory: dir,
 		Command:   "pwd",
+	}
+	if runtime.GOOS == "windows" {
+		cmd.Command = "cd"
 	}
 
 	stdout, _, err := cmd.Run(context.Background())
