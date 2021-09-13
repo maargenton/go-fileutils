@@ -4,11 +4,10 @@ import (
 	"bufio"
 	"context"
 	"errors"
-	"fmt"
 	"io"
 	"io/ioutil"
 	"os"
-	"path/filepath"
+	"runtime"
 	"strings"
 	"testing"
 
@@ -23,7 +22,7 @@ import (
 
 func TestCommandDirectory(t *testing.T) {
 	var tmp = tempDir(t)
-	var dir = filepath.Join(tmp, "a", "b", "c")
+	var dir = fileutils.Join(tmp, "a", "b", "c")
 	os.MkdirAll(dir, 0777)
 
 	var cmd = popen.Command{
@@ -32,8 +31,20 @@ func TestCommandDirectory(t *testing.T) {
 	}
 
 	stdout, _, err := cmd.Run(context.Background())
+	stdout = strings.TrimSpace(stdout)
+	path := fileutils.Clean(stdout)
 	verify.That(t, err).IsNil()
-	verify.That(t, stdout).StartsWith(dir) // Ignore trailing LF
+
+	if runtime.GOOS == "windows" {
+		// On windows, `pwd` is part of some unix tools extensions that may
+		// modify filenames to look like unix filepath; e.g.: /c/foo instead of
+		// c:\\foo.
+		expected := dir[3:]
+		verify.That(t, path).EndsWith(expected)
+	} else {
+		verify.That(t, path).Eq(dir)
+	}
+
 }
 
 func TestCommandEnv(t *testing.T) {
@@ -119,7 +130,7 @@ func TestCommandStdoutToFile(t *testing.T) {
 
 	var tmp = tempDir(t)
 
-	var stdoutFile = filepath.Join(tmp, "stdout.txt")
+	var stdoutFile = fileutils.Join(tmp, "stdout.txt")
 	var cmd = popen.Command{
 		Command: "bash",
 		Arguments: []string{
@@ -141,8 +152,8 @@ func TestCommandStdoutToFile(t *testing.T) {
 		}
 		return scanner.Err()
 	})
-	content, _ := ioutil.ReadFile(stdoutFile)
-	fmt.Println(string(content))
+	// content, _ := ioutil.ReadFile(stdoutFile)
+	// fmt.Println(string(content))
 	verify.That(t, linecnt).Eq(10)
 }
 
@@ -213,7 +224,7 @@ func TestCommandStderrToFile(t *testing.T) {
 
 	var tmp = tempDir(t)
 
-	var stderrFile = filepath.Join(tmp, "stderr.txt")
+	var stderrFile = fileutils.Join(tmp, "stderr.txt")
 	var cmd = popen.Command{
 		Command: "bash",
 		Arguments: []string{
@@ -283,7 +294,7 @@ func tempDir(t *testing.T) string {
 	if err != nil {
 		t.Fatalf("failed to create temp directory: %v", err)
 	}
-	tempDir, err = filepath.Abs(tempDir)
+	tempDir, err = fileutils.Abs(tempDir)
 	if err != nil {
 		t.Fatalf("failed to create temp directory: %v", err)
 	}

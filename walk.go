@@ -10,6 +10,10 @@ import (
 	"github.com/maargenton/go-errors"
 )
 
+// SkipDir is an alias of `filepath.SkipDir`, used as a sentinel diring directory
+// traversal to prevent any deeper recursion into a directory.
+var SkipDir = filepath.SkipDir
+
 // ErrRecursiveSymlink is a sentinel error returned during symlink traversal if
 // the target path is a symlink that has already been visited.
 var ErrRecursiveSymlink = errors.Sentinel("ErrRecursiveSymlink")

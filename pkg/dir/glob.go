@@ -4,7 +4,6 @@ import (
 	"fmt"
 	"io/fs"
 	"path"
-	"path/filepath"
 	"regexp"
 	"strings"
 
@@ -99,7 +98,7 @@ func NewGlobMatcher(pattern string) (m *GlobMatcher, err error) {
 			subdir = false
 		} else {
 			if prefix {
-				m.prefix = filepath.Join(m.prefix, fragment)
+				m.prefix = fileutils.Join(m.prefix, fragment)
 			} else {
 				m.fragments = append(m.fragments, globFragment{
 					subdir:  subdir,
@@ -110,8 +109,8 @@ func NewGlobMatcher(pattern string) (m *GlobMatcher, err error) {
 		}
 	}
 
-	if m.prefix != "" && !strings.HasSuffix(m.prefix, string(filepath.Separator)) {
-		m.prefix += string(filepath.Separator)
+	if m.prefix != "" && !strings.HasSuffix(m.prefix, string(fileutils.Separator)) {
+		m.prefix += string(fileutils.Separator)
 	}
 
 	return
@@ -212,7 +211,7 @@ func (m *GlobMatcher) Scan(walkFn fs.WalkDirFunc) error {
 func (m *GlobMatcher) ScanFrom(basepath string, walkFn fs.WalkDirFunc) error {
 	f := func(path string, d fs.DirEntry, err error) error {
 		if d != nil && d.IsDir() && !m.PrefixMatch(path) {
-			return filepath.SkipDir
+			return fileutils.SkipDir
 		}
 		if m.Match(path) {
 			err = walkFn(path, d, err)
@@ -220,7 +219,7 @@ func (m *GlobMatcher) ScanFrom(basepath string, walkFn fs.WalkDirFunc) error {
 			// If path is a match for the full pattern and a directory, there is
 			// no need t ogo further in.
 			if d != nil && d.IsDir() && err == nil {
-				err = filepath.SkipDir
+				err = fileutils.SkipDir
 			}
 			return err
 		}
@@ -243,11 +242,18 @@ type globFragment struct {
 }
 
 func (f *globFragment) match(fragment string) bool {
-	fragment = filepath.Clean(fragment)
+	fragment = fileutils.Clean(fragment)
+	if hasTrailingSeparator(fragment) {
+		fragment = fragment[:len(fragment)-1]
+	}
 	if f.re != nil {
 		return f.re.MatchString(fragment)
 	}
 	return fragment == f.literal
+}
+
+func hasTrailingSeparator(path string) bool {
+	return len(path) > 0 && fileutils.IsPathSeparator(path[len(path)-1])
 }
 
 // matchStart matches f against the start of a full path and retusn all possible

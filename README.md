@@ -18,19 +18,33 @@ A collection of filesystem utilities for Go
 
 ---------------------------
 
-Package `fileutils` is a collection of filesystem utilities including directory
-traversal with symlinks support, finding file and folders with extended glob
-pattern, filename manipulation and atomic file operations.
+Package `fileutils` is a collection of filename manipulation and filesystem
+utilities including directory traversal with symlinks support, finding file and
+folders with extended glob pattern, and atomic file operations.
 
-> **NOTE:** This package is directly usable on all Unix-like operating systems,
-> and its API is now stable as of v0.5.0 -- Windows support still requires more
-> work.
+To help support non-unix platforms, it also includes ad set of functions that
+are similar to those found in package "path/filepath", but but using '/' as path
+separator, and preserving trailing separator for directory filenames.
 
 ## Installation
 
     go get github.com/maargenton/go-fileutils
 
 ## Key features
+
+### Filenames with consistent '/' separator
+
+All unix platforms use '/' as path separator, and while windows recommends using
+`\\`, it also accepts paths with regular forward slash as path separators. For
+that reason, this package takes the stance of always using forward slash as path
+separator. The immediate benefit is that all relative paths become platform
+agnostic, freeing the cross-platform client code from having to deal with
+special cases for windows.
+
+The notion of absolute path remains different across platforms, but they can
+still be manipulated safely and consistently without having to deal with
+platform-specific special cases in most instances.
+
 
 ### Atomic file operations
 
@@ -62,7 +76,7 @@ pattern, filename manipulation and atomic file operations.
 
 ### Filesystem scanning and globing
 
-`fileutils.WalkDir()` implements an enhanced version of `filepath.WalkDir()` that
+`fileutils.Walk()` implements an enhanced version of `filepath.WalkDir()` that
 follows symlinks safely and adds some flexibility in the way paths are reported.
 
 `dir.Glob()` and `dir.Scan()` are convenient functions to locate and

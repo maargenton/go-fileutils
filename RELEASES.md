@@ -1,3 +1,12 @@
+# v0.6.0
+
+## Major changes
+
+- Fix all major compatibility issues and inconsistencies with Windows platform.
+- Provide full set of functions dealing with filenames, using '/' as path
+  separator independently of the platform.
+- Remove experimental sub-packages, previously located under `pkg/x`
+
 # v0.5.0
 
 ## Major changes

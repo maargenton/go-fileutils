@@ -4,7 +4,7 @@ import (
 	"io/fs"
 	"io/ioutil"
 	"os"
-	"path/filepath"
+	"runtime"
 	"testing"
 
 	"github.com/maargenton/go-testpredicate/pkg/require"
@@ -25,6 +25,9 @@ func TestWalkWithPrefix(t *testing.T) {
 		"src/",
 		"src/foo.cpp",
 		"src/foo.h",
+		"dst/",
+		"dst/foo.cpp",
+		"dst/foo.h",
 	})
 }
 
@@ -38,6 +41,9 @@ func TestWalkWithRoot(t *testing.T) {
 		"testdata/src/",
 		"testdata/src/foo.cpp",
 		"testdata/src/foo.h",
+		"testdata/dst/",
+		"testdata/dst/foo.cpp",
+		"testdata/dst/foo.h",
 	})
 }
 
@@ -52,6 +58,9 @@ func TestWalkWithNoRootNoPrefix(t *testing.T) {
 		"testdata/src/",
 		"testdata/src/foo.cpp",
 		"testdata/src/foo.h",
+		"testdata/dst/",
+		"testdata/dst/foo.cpp",
+		"testdata/dst/foo.h",
 	})
 	verify.That(t, records).IsDisjointSetFrom([]string{
 		"./",
@@ -62,17 +71,31 @@ func TestWalkFromFsRoot(t *testing.T) {
 	var records []string
 	var f = makeWalkDirPathRecorder(&records, skipDirFunc)
 
-	err := fileutils.Walk("", "/", f)
-	verify.That(t, err).IsError(nil)
-	verify.That(t, records).IsSupersetOf([]string{
-		"/bin/",
-		"/dev/",
-		"/sbin/",
-		"/usr/",
-	})
-	verify.That(t, records).IsDisjointSetFrom([]string{
-		"/",
-	})
+	if runtime.GOOS == "windows" {
+		err := fileutils.Walk("", "C:/", f)
+		verify.That(t, err).IsError(nil)
+		verify.That(t, records).IsSupersetOf([]string{
+			"C:/Documents and Settings/",
+			"C:/Program Files/",
+		})
+		verify.That(t, records).IsDisjointSetFrom([]string{
+			"C:/",
+		})
+
+	} else {
+		err := fileutils.Walk("", "/", f)
+		verify.That(t, err).IsError(nil)
+		verify.That(t, records).IsSupersetOf([]string{
+			"/bin/",
+			"/dev/",
+			"/sbin/",
+			"/usr/",
+		})
+		verify.That(t, records).IsDisjointSetFrom([]string{
+			"/",
+		})
+
+	}
 }
 
 func TestSymlinks(t *testing.T) {
@@ -149,9 +172,9 @@ func setupTestFolder() (basepath string, cleanup func(), err error) {
 	var filenames []string
 	for _, n := range []string{"foo", "bar"} {
 		filenames = append(filenames,
-			filepath.Join(basepath, "src", n, n+".h"),
-			filepath.Join(basepath, "src", n, n+".cpp"),
-			filepath.Join(basepath, "src", n, n+"_test.cpp"),
+			fileutils.Join(basepath, "src", n, n+".h"),
+			fileutils.Join(basepath, "src", n, n+".cpp"),
+			fileutils.Join(basepath, "src", n, n+"_test.cpp"),
 		)
 	}
 	err = fileutils.Touch(filenames...)
@@ -161,12 +184,12 @@ func setupTestFolder() (basepath string, cleanup func(), err error) {
 func setupTestFolderWithSymlinks(recursive, broken bool) (basepath string, cleanup func(), err error) {
 	basepath, cleanup, err = setupTestFolder()
 	if err == nil {
-		os.Symlink("src", filepath.Join(basepath, "dst")) // Regular symlink
+		os.Symlink("src", fileutils.Join(basepath, "dst")) // Regular symlink
 		if recursive {
-			os.Symlink("../src", filepath.Join(basepath, "dst/src")) // Recursive symlink
+			os.Symlink("../src", fileutils.Join(basepath, "dst/src")) // Recursive symlink
 		}
 		if broken {
-			os.Symlink("../src2", filepath.Join(basepath, "dst/src3")) // Invalid destination symlink
+			os.Symlink("../src2", fileutils.Join(basepath, "dst/src3")) // Invalid destination symlink
 		}
 	}
 	return

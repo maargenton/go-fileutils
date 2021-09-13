@@ -5,7 +5,7 @@ import (
 	"io/ioutil"
 	"os"
 	"path"
-	"path/filepath"
+	"runtime"
 	"testing"
 
 	"github.com/maargenton/go-testpredicate/pkg/require"
@@ -156,9 +156,16 @@ func TestGlobStarFromCurrentDirectory(t *testing.T) {
 }
 
 func TestGlobFromSystemRoot(t *testing.T) {
-	matches, err := dir.Glob("/d*")
-	require.That(t, err).IsNil()
-	require.That(t, matches).Contains([]string{"/dev/"})
+	if runtime.GOOS == "windows" {
+		matches, err := dir.Glob("C:/Pro*")
+		require.That(t, err).IsNil()
+		require.That(t, matches).Contains([]string{"C:/Program Files/"})
+
+	} else {
+		matches, err := dir.Glob("/d*")
+		require.That(t, err).IsNil()
+		require.That(t, matches).Contains([]string{"/dev/"})
+	}
 }
 
 // func TestGlobFromSystemRoot2(t *testing.T) {
@@ -324,9 +331,9 @@ func setupTestFolder() (basepath string, cleanup func(), err error) {
 	var filenames []string
 	for _, n := range []string{"foo", "bar", "aaa", "bbb"} {
 		filenames = append(filenames,
-			filepath.Join(basepath, "src", n, n+".h"),
-			filepath.Join(basepath, "src", n, n+".cpp"),
-			filepath.Join(basepath, "src", n, n+"_test.cpp"),
+			fileutils.Join(basepath, "src", n, n+".h"),
+			fileutils.Join(basepath, "src", n, n+".cpp"),
+			fileutils.Join(basepath, "src", n, n+"_test.cpp"),
 		)
 	}
 	err = fileutils.Touch(filenames...)
