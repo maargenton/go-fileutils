@@ -23,10 +23,8 @@ utilities including directory traversal with symlinks support, finding file and
 folders with extended glob pattern, and atomic file operations.
 
 To help support non-unix platforms, it also includes ad set of functions that
-are similar to those found in package "path/filepath", but represents all path
-using '/' as a separator, and preserves a trailing path separator commonly used
-to represent directory names.
-
+are similar to those found in package "path/filepath", but but using '/' as path
+separator, and preserving trailing separator for directory filenames.
 
 ## Installation
 
