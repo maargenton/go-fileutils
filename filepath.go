@@ -75,6 +75,7 @@ func Ext(path string) string {
 // 	return filepath.HasPrefix(path)
 // }
 
+// IsAbs reports whether the path is absolute.
 func IsAbs(path string) bool {
 	return filepath.IsAbs(path)
 }
