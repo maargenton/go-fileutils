@@ -25,6 +25,14 @@ func TestNewGlobMatcherError(t *testing.T) {
 	require.That(t, m).IsNil()
 }
 
+func TestNewGlobMatcherExplicitFilename(t *testing.T) {
+	pattern := `index.html`
+	m, err := dir.NewGlobMatcher(pattern)
+	require.That(t, err).IsError(nil)
+	require.That(t, m).IsNotNil()
+	require.That(t, m.Match("index.html")).IsTrue()
+}
+
 // dir.NewGlobMatcher()
 // ---------------------------------------------------------------------------
 

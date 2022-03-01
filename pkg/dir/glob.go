@@ -107,11 +107,6 @@ func NewGlobMatcher(pattern string) (m *GlobMatcher, err error) {
 			}
 		}
 	}
-
-	if m.prefix != "" && !strings.HasSuffix(m.prefix, string(fileutils.Separator)) {
-		m.prefix += string(fileutils.Separator)
-	}
-
 	return
 }
 
