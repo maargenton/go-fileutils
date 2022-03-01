@@ -4,9 +4,8 @@ github.com/maargenton/go-errors v1.0.0 h1:gNDwTfN3VHwLog2w/BfeGlCTjwjJ6H0NeMKS+4
 github.com/maargenton/go-errors v1.0.0/go.mod h1:yVvhNp6mywh/FFoTYbi2WPH7oP0U9AZXtvGa8SDIxOQ=
 github.com/maargenton/go-testpredicate v0.4.4/go.mod h1:sn267JpJ65uvLQ7VtYzPLvXQiw0tHHw+KbCFzxRPOww=
 github.com/maargenton/go-testpredicate v0.6.4/go.mod h1:lUPR99Ipl1o49oRb5wEUwb/7KXrwc1FAVR6aZmCmoS8=
-github.com/maargenton/go-testpredicate v1.0.0 h1:8dimey5rt3kbqTFADidZYnbdnLfjWTyYD3vitM77q4s=
-github.com/maargenton/go-testpredicate v1.0.0/go.mod h1:ZscqHa6PT35rm0psZd9y1KV6ygPL1C5NfDFBDFTkGu8=
-github.com/pmezard/go-difflib v1.0.0 h1:4DBwDE0NGyQoBHbLQYPwSUPoCMWR5BEzIk/f1lZbAQM=
+github.com/maargenton/go-testpredicate v1.3.0 h1:uy9g71epeAmI2CXHnEYKFDwueXppvLHZMoUfAF82K9o=
+github.com/maargenton/go-testpredicate v1.3.0/go.mod h1:ZscqHa6PT35rm0psZd9y1KV6ygPL1C5NfDFBDFTkGu8=
 github.com/pmezard/go-difflib v1.0.0/go.mod h1:iKH77koFhYxTK1pcRnkKkqfTogsbg7gZNVY4sRDYZ/4=
 github.com/yuin/goldmark v1.3.5/go.mod h1:mwnBkeHKe2W/ZEtQ+71ViKU8L12m81fl3OWwC1Zlc8k=
 golang.org/x/crypto v0.0.0-20190308221718-c2843e01d9a2/go.mod h1:djNgcEr1/C05ACkg1iLfiJU5Ep61QUkGW8qpdssI0+w=
