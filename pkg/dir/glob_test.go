@@ -25,6 +25,14 @@ func TestNewGlobMatcherError(t *testing.T) {
 	require.That(t, m).IsNil()
 }
 
+func TestNewGlobMatcherExplicitFilename(t *testing.T) {
+	pattern := `index.html`
+	m, err := dir.NewGlobMatcher(pattern)
+	require.That(t, err).IsError(nil)
+	require.That(t, m).IsNotNil()
+	require.That(t, m.Match("index.html")).IsTrue()
+}
+
 // dir.NewGlobMatcher()
 // ---------------------------------------------------------------------------
 
@@ -120,6 +128,7 @@ func TestGlob(t *testing.T) {
 		{`src/**/*_test.{c,cc,cpp}`, 4},
 		{`src/**/*_test.{h,hh,hpp}`, 0},
 		{`src/**/*.{h,cpp}`, 12},
+		{`src/foo/foo.cpp`, 1},
 	}
 
 	basepath, cleanup, err := setupTestFolder()
@@ -168,6 +177,12 @@ func TestGlobFromSystemRoot(t *testing.T) {
 	}
 }
 
+func TestGlobExplicit(t *testing.T) {
+	matches, err := dir.Glob("glob_test.go")
+	require.That(t, err).IsNil()
+	require.That(t, matches).Eq([]string{"glob_test.go"})
+}
+
 // func TestGlobFromSystemRoot2(t *testing.T) {
 // 	matches, err := dir.Glob("/dev/std*")
 // 	require.That(t, err).IsNil()
@@ -180,7 +195,7 @@ func TestGlobFromSystemRoot(t *testing.T) {
 // ---------------------------------------------------------------------------
 // dir.GlobFrom()
 
-func TestGlobMatcherGlobFrom(t *testing.T) {
+func TestGlobFrom(t *testing.T) {
 	var tcs = []struct {
 		pattern string
 		count   int
@@ -190,6 +205,7 @@ func TestGlobMatcherGlobFrom(t *testing.T) {
 		{`src/**/*_test.{c,cc,cpp}`, 4},
 		{`src/**/*_test.{h,hh,hpp}`, 0},
 		{`src/**/*.{h,cpp}`, 12},
+		{`src/foo/foo.cpp`, 1},
 	}
 	basepath, cleanup, err := setupTestFolder()
 	require.That(t, err).IsNil()
@@ -207,11 +223,17 @@ func TestGlobMatcherGlobFrom(t *testing.T) {
 	}
 }
 
+func TestGlobFromExplicit(t *testing.T) {
+	matches, err := dir.GlobFrom("..", "dir/glob_test.go")
+	require.That(t, err).IsNil()
+	require.That(t, matches).Eq([]string{"dir/glob_test.go"})
+}
+
 // dir.GlobFrom()
 // ---------------------------------------------------------------------------
 
 // ---------------------------------------------------------------------------
-// dir.Glob()
+// dir.Scan()
 
 func TestScan(t *testing.T) {
 	var tcs = []struct {

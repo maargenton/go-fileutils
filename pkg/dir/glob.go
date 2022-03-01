@@ -8,12 +8,11 @@ import (
 	"strings"
 
 	"github.com/maargenton/go-fileutils"
-	// "golang.org/x/tools/internal/fastwalk"
 )
 
-// Glob scans the file tree and returns a list of filenames matching the
-// pattern. The pattern must be specified according to the extended glob pattern
-// described in the package level documentation.
+// Glob scans the file tree and returns a list of filenames matching `pattern`
+// which must be specified according to the extended glob pattern described in
+// this package.
 func Glob(pattern string) (matches []string, err error) {
 	m, err := NewGlobMatcher(pattern)
 	if err != nil {
@@ -22,12 +21,12 @@ func Glob(pattern string) (matches []string, err error) {
 	return m.Glob()
 }
 
-// GlobFrom scans the file tree starting at basepath and returns a list of
-// filenames matching the pattern. The resulting filenames contain the full path
-// including the basepath prefix. The pattern should be relative and must be
-// specified according to the extended glob pattern described in the package
-// level documentation. If the pattern is absolute, the basepath is ignored and
-// will not appear as a prefix in the matches.
+// GlobFrom scans the file tree starting at `basepath` and returns a list of
+// filenames matching `pattern`, which must be specified according to the
+// extended glob pattern described in this package. If the pattern is relative,
+// the resulting filenames are relative to `basepath`. If the pattern is
+// absolute, the basepath is ignored and the the resulting filenames are
+// absolute.
 func GlobFrom(basepath, pattern string) (matches []string, err error) {
 	m, err := NewGlobMatcher(pattern)
 	if err != nil {
@@ -36,9 +35,9 @@ func GlobFrom(basepath, pattern string) (matches []string, err error) {
 	return m.GlobFrom(basepath)
 }
 
-// Scan scans the file tree for filenames matching the pattern and call the
-// walkFn function for every match. The pattern must be specified according to
-// the extended glob pattern described in the package level documentation.
+// Scan scans the file tree for filenames matching `pattern` and calls `walkFn`
+// for every match. The pattern must be specified according to the extended glob
+// pattern described in the package level documentation.
 func Scan(pattern string, walkFn fs.WalkDirFunc) error {
 	m, err := NewGlobMatcher(pattern)
 	if err != nil {
@@ -47,12 +46,12 @@ func Scan(pattern string, walkFn fs.WalkDirFunc) error {
 	return m.Scan(walkFn)
 }
 
-// ScanFrom scans the file tree starting at basepath for filenames matching the
-// pattern and call the walkFn function for every match. The resulting filenames
-// contain the full path including the basepath prefix. The pattern should be
-// relative and must be specified according to the extended glob pattern
-// described in the package level documentation. If the pattern is absolute, the
-// basepath is ignored and will not appear as a prefix in the matches.
+// ScanFrom scans the file tree starting at `basepath` for filenames matching
+// `pattern` and calls `walkFn` for every match. The pattern must be specified
+// according to the extended glob pattern described in this package. If the
+// pattern is relative, filenames are reported relative to `basepath`. If the
+// pattern is absolute, the basepath is ignored and filenames are reported with
+// an absolute path.
 func ScanFrom(basepath, pattern string, walkFn fs.WalkDirFunc) error {
 	m, err := NewGlobMatcher(pattern)
 	if err != nil {
@@ -97,7 +96,7 @@ func NewGlobMatcher(pattern string) (m *GlobMatcher, err error) {
 			})
 			subdir = false
 		} else {
-			if prefix {
+			if prefix && len(fragments) > 0 {
 				m.prefix = fileutils.Join(m.prefix, fragment)
 			} else {
 				m.fragments = append(m.fragments, globFragment{
@@ -108,11 +107,6 @@ func NewGlobMatcher(pattern string) (m *GlobMatcher, err error) {
 			}
 		}
 	}
-
-	if m.prefix != "" && !strings.HasSuffix(m.prefix, string(fileutils.Separator)) {
-		m.prefix += string(fileutils.Separator)
-	}
-
 	return
 }
 

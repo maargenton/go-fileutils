@@ -1,3 +1,12 @@
+# v0.6.2
+
+- `dir.Glob()` and associated function can now match patterns that are an
+  explicit filename instead of a glob pattern.
+
+# v0.6.1
+
+- Code cleanup, no changes
+
 # v0.6.0
 
 ## Major changes
