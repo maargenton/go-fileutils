@@ -135,3 +135,13 @@ The behavior of stdout and stderr is controlled by 3 similar variables:
 Except for `StdoutReader` and `StderrReader` which are most likely stateful, the
 command object is stateless and can potentially be `Run()` multiple times,
 concurrently.
+
+In addition, on unix platforms, popen.Command can handle graceful shutdown of
+the child process when the context becomes done. When a `ShutdownGracePeriod` is
+specified, a shutdown signal is sent to the child process (SIGINT by default),
+and the process is forcibly killed only if it has not exited by the end of the
+grace period. The child process is also assigned its own process group by
+default, and signals are sent to the entire group, unless `NoProcessGroup`
+options is specified -- this avoids waiting forever issues linked with a child
+process exiting while its descendants remain alive because they didn't get the
+signal.

@@ -7,6 +7,8 @@ import (
 	"os"
 	"os/exec"
 	"strings"
+	"syscall"
+	"time"
 )
 
 // Command is an additional layer of abstraction over exec.Command aimed at
@@ -80,6 +82,33 @@ type Command struct {
 	// StderrReader if specified is expected to read the content of the command
 	// stderr stream from w. If it returns an error, the command is aborted.
 	StderrReader func(r io.Reader) error
+
+	// ShutdownGracePeriod, if specified, changes the context handling
+	// mechanism. By default, if the context becomes done before the command
+	// completes, the child process is killed. If ShutdownGracePeriod is
+	// non-zero, the child process is sent a first signal for graceful shutdown
+	// (SIGINT by default), and is only killed if it has not exited by the end
+	// of the grace period. This field is ignored on Windows which does not
+	// implement unix signals.
+	ShutdownGracePeriod time.Duration
+
+	// ShutdownSignal is the initial signal sent to the child process when the
+	// context becomes done before the command completes, if
+	// `ShutdownGracePeriod` is non-zero. It defaults to syscall.SIGINT if not
+	// set explicitly. This field is ignored on Windows which does not implement
+	// unix signals.
+	ShutdownSignal syscall.Signal
+
+	// NoProcessGroup when true prevents the command for create a separate
+	// process group for the child process. By default the child process is
+	// created in its own process group, and signals are sent to the whole group
+	// -- this is similar to ctrl-C in a terminal, which sends a SIGINT to the
+	// whole process group. Note that when using NoProcessGroup, Run() can block
+	// forever even when the context is canceled or timedout, if a grandchild
+	// process keeps running after the child process is killed;
+	// os.Process.Wait() will keep waiting for all descendants to exit. This
+	// field is ignored on Windows which does not implement unix signals.
+	NoProcessGroup bool
 }
 
 // Run executes the command as specified and returns the captured content of
@@ -87,10 +116,13 @@ type Command struct {
 // but returns a non-zero exit status, the returned error is an exec.ExitError
 // that contains the actual status code.
 func (c *Command) Run(ctx context.Context) (stdout, stderr string, err error) {
+	if ctx == nil {
+		ctx = context.Background()
+	}
 	ctx, cancel := context.WithCancel(ctx)
 	defer cancel()
 
-	var cmd = exec.CommandContext(ctx, c.Command, c.Arguments...)
+	var cmd = exec.Command(c.Command, c.Arguments...)
 	var closeAfterWait []io.Closer
 	var servicers []func()
 	var servicerErrors chan error
@@ -193,6 +225,8 @@ func (c *Command) Run(ctx context.Context) (stdout, stderr string, err error) {
 	// Configure stdin
 
 	// Start the sub-process
+	c.configureCommand(cmd)
+
 	if err := cmd.Start(); err != nil {
 		return "", "", fmt.Errorf(
 			"failed to start command '%v': %w",
@@ -206,7 +240,8 @@ func (c *Command) Run(ctx context.Context) (stdout, stderr string, err error) {
 		}
 	}
 
-	err = cmd.Wait()
+	// err = cmd.Wait()
+	err = c.wait(cmd, ctx)
 	for _, c := range closeAfterWait {
 		c.Close()
 	}
@@ -219,13 +254,11 @@ func (c *Command) Run(ctx context.Context) (stdout, stderr string, err error) {
 		}
 	}
 
-	if ctx.Err() != nil {
-		err = ctx.Err()
+	if servicerError != nil {
+		err = servicerError
 	}
-	if err == nil || err == context.Canceled {
-		if servicerError != nil {
-			err = servicerError
-		}
+	if err == nil && ctx.Err() != nil {
+		err = ctx.Err()
 	}
 
 	stdout = stdoutBuf.String()
