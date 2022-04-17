@@ -1,3 +1,6 @@
+//go:build !windows
+// +build !windows
+
 package popen_test
 
 import (
