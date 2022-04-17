@@ -9,23 +9,28 @@ import (
 )
 
 func main() {
-	sigs := make(chan os.Signal, 1)
-	signal.Notify(sigs, syscall.SIGINT, syscall.SIGTERM)
-	done := make(chan bool, 1)
+	var shutdownPeriod time.Duration
+	if len(os.Args) > 1 {
+		shutdownPeriod, _ = time.ParseDuration(os.Args[1])
 
-	go func() {
-		select {
-		case sig := <-sigs:
-			fmt.Printf("signal: %v\n", sig)
-			done <- true
-		}
-	}()
+		sigs := make(chan os.Signal, 1)
+		signal.Notify(sigs, syscall.SIGINT, syscall.SIGTERM)
+		done := make(chan bool, 1)
 
-	fmt.Printf("awaiting signal\n")
-	<-done
+		go func() {
+			select {
+			case sig := <-sigs:
+				fmt.Printf("signal: %v\n", sig)
+				done <- true
+			}
+		}()
 
-	fmt.Printf("shuting down ...\n")
-	<-time.After(200 * time.Millisecond)
+		fmt.Printf("awaiting signal\n")
+		<-done
+
+		fmt.Printf("shuting down ...\n")
+		<-time.After(shutdownPeriod)
+	}
 
 	fmt.Printf("exiting\n")
 }

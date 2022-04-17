@@ -9,6 +9,7 @@ import (
 	"testing"
 	"time"
 
+	"github.com/maargenton/go-testpredicate/pkg/bdd"
 	"github.com/maargenton/go-testpredicate/pkg/verify"
 
 	"github.com/maargenton/go-fileutils/pkg/popen"
@@ -51,49 +52,51 @@ func TestCommandTimeoutSigint(t *testing.T) {
 	verify.That(t, err).ToString().Eq("signal: terminated")
 }
 
-func TestCommandTimeoutTrapSigtermWait(t *testing.T) {
-	var cmd = popen.Command{
+func TestCommandKillGracePeriod(t *testing.T) {
+	// Pre-built test child process to avoid long timeouts
+	var build = popen.Command{
 		Command: "go",
 		Arguments: []string{
 			"run",
 			"./test-child-process",
 		},
-		KillGracePeriod: 300 * time.Millisecond,
-		PreKillSignal:   syscall.SIGTERM,
 	}
+	build.Run(nil)
 
-	ctx, cancel := context.WithTimeout(context.Background(), 500*time.Millisecond)
-	defer cancel()
-	stdout, _, err := cmd.Run(ctx)
-	verify.That(t, err).IsNotNil()
+	bdd.Given(t, "a command that takes time to shutdown", func(t *bdd.T) {
+		var cmd = popen.Command{
+			Command: "go",
+			Arguments: []string{
+				"run",
+				"./test-child-process",
+				"200ms",
+			},
+		}
 
-	// child process takes 200ms after SIGINT / SIGTERM to shutdown; we wait
-	// longer that that is the grace period, so the process should exit on its
-	// own.
-	verify.That(t, stdout).EndsWith("exiting\n")
+		t.When("setting grace period longer than shutdown time", func(t *bdd.T) {
+			cmd.KillGracePeriod = 300 * time.Millisecond
+
+			t.Then("the command should exit on its own", func(t *bdd.T) {
+				ctx, cancel := context.WithTimeout(context.Background(), 500*time.Millisecond)
+				defer cancel()
+				stdout, _, err := cmd.Run(ctx)
+				verify.That(t, err).IsNotNil()
+				verify.That(t, stdout).EndsWith("exiting\n")
+			})
+		})
+		t.When("setting grace period shorter than shutdown time", func(t *bdd.T) {
+			cmd.KillGracePeriod = 100 * time.Millisecond
+
+			t.Then("the command should be killed while shutting down", func(t *bdd.T) {
+				ctx, cancel := context.WithTimeout(context.Background(), 500*time.Millisecond)
+				defer cancel()
+				stdout, _, err := cmd.Run(ctx)
+				verify.That(t, err).IsNotNil()
+				verify.That(t, stdout).EndsWith("shuting down ...\n")
+			})
+		})
+	})
 }
 
-func TestCommandTimeoutTrapSigtermKill(t *testing.T) {
-	var cmd = popen.Command{
-		Command: "go",
-		Arguments: []string{
-			"run",
-			"./test-child-process",
-		},
-		KillGracePeriod: 100 * time.Millisecond,
-		PreKillSignal:   syscall.SIGTERM,
-	}
-
-	ctx, cancel := context.WithTimeout(context.Background(), 500*time.Millisecond)
-	defer cancel()
-	stdout, _, err := cmd.Run(ctx)
-	verify.That(t, err).IsNotNil()
-
-	// child process takes 200ms after SIGINT / SIGTERM to shutdown; we wait
-	// only 100ms before sending SIGKILL, so the process should be killed while
-	// shutting down.
-	verify.That(t, stdout).EndsWith("shuting down ...\n")
-}
-
-// Context done
+// KillGracePeriod -- unix only
 // ---------------------------------------------------------------------------

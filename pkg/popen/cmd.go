@@ -114,6 +114,9 @@ type Command struct {
 // but returns a non-zero exit status, the returned error is an exec.ExitError
 // that contains the actual status code.
 func (c *Command) Run(ctx context.Context) (stdout, stderr string, err error) {
+	if ctx == nil {
+		ctx = context.Background()
+	}
 	ctx, cancel := context.WithCancel(ctx)
 	defer cancel()
 
