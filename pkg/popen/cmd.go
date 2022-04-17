@@ -86,14 +86,15 @@ type Command struct {
 	// KillGracePeriod, if specified, changes the context handling mechanism. By
 	// default, if the context becomes done before the command completes, the
 	// child process is killed. If KillGracePeriod is non-zero, the child
-	// process is sent a first signal for graceful shutdown (SIGTERM by
-	// default), and is only killed if it has not exited by the end of the grace
-	// period. non-zero
+	// process is sent a first signal for graceful shutdown (SIGINT by default),
+	// and is only killed if it has not exited by the end of the grace period.
+	// This field is ignored on Windows which does not implement unix signals.
 	KillGracePeriod time.Duration
 
 	// PreKillSignal is the initial signal sent to the child process when the
 	// context becomes done before the command completes, if `KillGracePeriod`
-	// is non-zero. It defaults to syscall.SIGINT if not set explicitly.
+	// is non-zero. It defaults to syscall.SIGINT if not set explicitly. This
+	// field is ignored on Windows which does not implement unix signals.
 	PreKillSignal syscall.Signal
 
 	// NoProcessGroup when true prevents the command for create a separate
@@ -103,7 +104,8 @@ type Command struct {
 	// whole process group. Note that when using NoProcessGroup, Run() can block
 	// forever even when the context is canceled or timedout, if a grandchild
 	// process keeps running after the child process is killed;
-	// os.Process.Wait() will keep waiting for all descendants to exit.
+	// os.Process.Wait() will keep waiting for all descendants to exit. This
+	// field is ignored on Windows which does not implement unix signals.
 	NoProcessGroup bool
 }
 
@@ -218,9 +220,7 @@ func (c *Command) Run(ctx context.Context) (stdout, stderr string, err error) {
 	// Configure stdin
 
 	// Start the sub-process
-	if !c.NoProcessGroup {
-		cmd.SysProcAttr = &syscall.SysProcAttr{Setpgid: true}
-	}
+	c.configureCommand(cmd)
 
 	if err := cmd.Start(); err != nil {
 		return "", "", fmt.Errorf(
@@ -259,49 +259,6 @@ func (c *Command) Run(ctx context.Context) (stdout, stderr string, err error) {
 	stdout = stdoutBuf.String()
 	stderr = stderrBuf.String()
 	return
-}
-
-func (c *Command) wait(cmd *exec.Cmd, ctx context.Context) error {
-	var waitError error
-	var waitDone = make(chan struct{})
-
-	go func() {
-		waitError = cmd.Wait()
-		close(waitDone)
-	}()
-
-	select {
-	case <-waitDone:
-		return waitError
-	case <-ctx.Done():
-	}
-
-	if c.KillGracePeriod != 0 {
-		if c.PreKillSignal == 0 {
-			c.PreKillSignal = syscall.SIGINT
-		}
-		c.kill(cmd, c.PreKillSignal)
-
-		select {
-		case <-waitDone:
-			return waitError
-		case <-time.After(c.KillGracePeriod):
-		}
-	}
-
-	// Kill process after potential grace period; ignore error -- process
-	// already exited
-	c.kill(cmd, syscall.SIGKILL)
-
-	<-waitDone
-	return waitError
-}
-
-func (c *Command) kill(cmd *exec.Cmd, signal syscall.Signal) error {
-	if c.NoProcessGroup {
-		return cmd.Process.Signal(signal)
-	}
-	return syscall.Kill(-cmd.Process.Pid, signal)
 }
 
 func drain(r io.Reader) {
