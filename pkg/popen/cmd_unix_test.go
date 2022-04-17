@@ -16,7 +16,7 @@ import (
 )
 
 // ---------------------------------------------------------------------------
-// KillGracePeriod -- unix only
+// ShutdownGracePeriod -- unix only
 
 func TestCommandTimeout(t *testing.T) {
 	var cmd = popen.Command{
@@ -24,7 +24,7 @@ func TestCommandTimeout(t *testing.T) {
 		Arguments: []string{
 			"3",
 		},
-		KillGracePeriod: 200 * time.Millisecond,
+		ShutdownGracePeriod: 200 * time.Millisecond,
 	}
 
 	ctx, cancel := context.WithTimeout(context.Background(), 100*time.Millisecond)
@@ -40,9 +40,9 @@ func TestCommandTimeoutSigint(t *testing.T) {
 		Arguments: []string{
 			"3",
 		},
-		KillGracePeriod: 200 * time.Millisecond,
-		PreKillSignal:   syscall.SIGTERM,
-		NoProcessGroup:  true,
+		ShutdownGracePeriod: 200 * time.Millisecond,
+		ShutdownSignal:      syscall.SIGTERM,
+		NoProcessGroup:      true,
 	}
 
 	ctx, cancel := context.WithTimeout(context.Background(), 100*time.Millisecond)
@@ -52,7 +52,7 @@ func TestCommandTimeoutSigint(t *testing.T) {
 	verify.That(t, err).ToString().Eq("signal: terminated")
 }
 
-func TestCommandKillGracePeriod(t *testing.T) {
+func TestCommandShutdownGracePeriod(t *testing.T) {
 	// Pre-built test child process to avoid long timeouts
 	var build = popen.Command{
 		Command: "go",
@@ -74,7 +74,7 @@ func TestCommandKillGracePeriod(t *testing.T) {
 		}
 
 		t.When("setting grace period longer than shutdown time", func(t *bdd.T) {
-			cmd.KillGracePeriod = 300 * time.Millisecond
+			cmd.ShutdownGracePeriod = 300 * time.Millisecond
 
 			t.Then("the command should exit on its own", func(t *bdd.T) {
 				ctx, cancel := context.WithTimeout(context.Background(), 500*time.Millisecond)
@@ -85,7 +85,7 @@ func TestCommandKillGracePeriod(t *testing.T) {
 			})
 		})
 		t.When("setting grace period shorter than shutdown time", func(t *bdd.T) {
-			cmd.KillGracePeriod = 100 * time.Millisecond
+			cmd.ShutdownGracePeriod = 100 * time.Millisecond
 
 			t.Then("the command should be killed while shutting down", func(t *bdd.T) {
 				ctx, cancel := context.WithTimeout(context.Background(), 500*time.Millisecond)
@@ -98,5 +98,5 @@ func TestCommandKillGracePeriod(t *testing.T) {
 	})
 }
 
-// KillGracePeriod -- unix only
+// ShutdownGracePeriod -- unix only
 // ---------------------------------------------------------------------------

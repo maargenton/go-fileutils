@@ -83,19 +83,21 @@ type Command struct {
 	// stderr stream from w. If it returns an error, the command is aborted.
 	StderrReader func(r io.Reader) error
 
-	// KillGracePeriod, if specified, changes the context handling mechanism. By
-	// default, if the context becomes done before the command completes, the
-	// child process is killed. If KillGracePeriod is non-zero, the child
-	// process is sent a first signal for graceful shutdown (SIGINT by default),
-	// and is only killed if it has not exited by the end of the grace period.
-	// This field is ignored on Windows which does not implement unix signals.
-	KillGracePeriod time.Duration
+	// ShutdownGracePeriod, if specified, changes the context handling
+	// mechanism. By default, if the context becomes done before the command
+	// completes, the child process is killed. If ShutdownGracePeriod is
+	// non-zero, the child process is sent a first signal for graceful shutdown
+	// (SIGINT by default), and is only killed if it has not exited by the end
+	// of the grace period. This field is ignored on Windows which does not
+	// implement unix signals.
+	ShutdownGracePeriod time.Duration
 
-	// PreKillSignal is the initial signal sent to the child process when the
-	// context becomes done before the command completes, if `KillGracePeriod`
-	// is non-zero. It defaults to syscall.SIGINT if not set explicitly. This
-	// field is ignored on Windows which does not implement unix signals.
-	PreKillSignal syscall.Signal
+	// ShutdownSignal is the initial signal sent to the child process when the
+	// context becomes done before the command completes, if
+	// `ShutdownGracePeriod` is non-zero. It defaults to syscall.SIGINT if not
+	// set explicitly. This field is ignored on Windows which does not implement
+	// unix signals.
+	ShutdownSignal syscall.Signal
 
 	// NoProcessGroup when true prevents the command for create a separate
 	// process group for the child process. By default the child process is

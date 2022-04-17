@@ -31,16 +31,16 @@ func (c *Command) wait(cmd *exec.Cmd, ctx context.Context) error {
 	case <-ctx.Done():
 	}
 
-	if c.KillGracePeriod != 0 {
-		if c.PreKillSignal == 0 {
-			c.PreKillSignal = syscall.SIGINT
+	if c.ShutdownGracePeriod != 0 {
+		if c.ShutdownSignal == 0 {
+			c.ShutdownSignal = syscall.SIGINT
 		}
-		c.kill(cmd, c.PreKillSignal)
+		c.kill(cmd, c.ShutdownSignal)
 
 		select {
 		case <-waitDone:
 			return waitError
-		case <-time.After(c.KillGracePeriod):
+		case <-time.After(c.ShutdownGracePeriod):
 		}
 	}
 
