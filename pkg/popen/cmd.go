@@ -7,6 +7,8 @@ import (
 	"os"
 	"os/exec"
 	"strings"
+	"syscall"
+	"time"
 )
 
 // Command is an additional layer of abstraction over exec.Command aimed at
@@ -80,6 +82,29 @@ type Command struct {
 	// StderrReader if specified is expected to read the content of the command
 	// stderr stream from w. If it returns an error, the command is aborted.
 	StderrReader func(r io.Reader) error
+
+	// KillGracePeriod, if specified, changes the context handling mechanism. By
+	// default, if the context becomes done before the command completes, the
+	// child process is killed. If KillGracePeriod is non-zero, the child
+	// process is sent a first signal for graceful shutdown (SIGTERM by
+	// default), and is only killed if it has not exited by the end of the grace
+	// period. non-zero
+	KillGracePeriod time.Duration
+
+	// PreKillSignal is the initial signal sent to the child process when the
+	// context becomes done before the command completes, if `KillGracePeriod`
+	// is non-zero. It defaults to syscall.SIGINT if not set explicitly.
+	PreKillSignal syscall.Signal
+
+	// NoProcessGroup when true prevents the command for create a separate
+	// process group for the child process. By default the child process is
+	// created in its own process group, and signals are sent to the whole group
+	// -- this is similar to ctrl-C in a terminal, which sends a SIGINT to the
+	// whole process group. Note that when using NoProcessGroup, Run() can block
+	// forever even when the context is canceled or timedout, if a grandchild
+	// process keeps running after the child process is killed;
+	// os.Process.Wait() will keep waiting for all descendants to exit.
+	NoProcessGroup bool
 }
 
 // Run executes the command as specified and returns the captured content of
@@ -90,7 +115,7 @@ func (c *Command) Run(ctx context.Context) (stdout, stderr string, err error) {
 	ctx, cancel := context.WithCancel(ctx)
 	defer cancel()
 
-	var cmd = exec.CommandContext(ctx, c.Command, c.Arguments...)
+	var cmd = exec.Command(c.Command, c.Arguments...)
 	var closeAfterWait []io.Closer
 	var servicers []func()
 	var servicerErrors chan error
@@ -193,6 +218,10 @@ func (c *Command) Run(ctx context.Context) (stdout, stderr string, err error) {
 	// Configure stdin
 
 	// Start the sub-process
+	if !c.NoProcessGroup {
+		cmd.SysProcAttr = &syscall.SysProcAttr{Setpgid: true}
+	}
+
 	if err := cmd.Start(); err != nil {
 		return "", "", fmt.Errorf(
 			"failed to start command '%v': %w",
@@ -206,7 +235,8 @@ func (c *Command) Run(ctx context.Context) (stdout, stderr string, err error) {
 		}
 	}
 
-	err = cmd.Wait()
+	// err = cmd.Wait()
+	err = c.wait(cmd, ctx)
 	for _, c := range closeAfterWait {
 		c.Close()
 	}
@@ -219,18 +249,59 @@ func (c *Command) Run(ctx context.Context) (stdout, stderr string, err error) {
 		}
 	}
 
-	if ctx.Err() != nil {
-		err = ctx.Err()
+	if servicerError != nil {
+		err = servicerError
 	}
-	if err == nil || err == context.Canceled {
-		if servicerError != nil {
-			err = servicerError
-		}
+	if err == nil && ctx.Err() != nil {
+		err = ctx.Err()
 	}
 
 	stdout = stdoutBuf.String()
 	stderr = stderrBuf.String()
 	return
+}
+
+func (c *Command) wait(cmd *exec.Cmd, ctx context.Context) error {
+	var waitError error
+	var waitDone = make(chan struct{})
+
+	go func() {
+		waitError = cmd.Wait()
+		close(waitDone)
+	}()
+
+	select {
+	case <-waitDone:
+		return waitError
+	case <-ctx.Done():
+	}
+
+	if c.KillGracePeriod != 0 {
+		if c.PreKillSignal == 0 {
+			c.PreKillSignal = syscall.SIGINT
+		}
+		c.kill(cmd, c.PreKillSignal)
+
+		select {
+		case <-waitDone:
+			return waitError
+		case <-time.After(c.KillGracePeriod):
+		}
+	}
+
+	// Kill process after potential grace period; ignore error -- process
+	// already exited
+	c.kill(cmd, syscall.SIGKILL)
+
+	<-waitDone
+	return waitError
+}
+
+func (c *Command) kill(cmd *exec.Cmd, signal syscall.Signal) error {
+	if c.NoProcessGroup {
+		return cmd.Process.Signal(signal)
+	}
+	return syscall.Kill(-cmd.Process.Pid, signal)
 }
 
 func drain(r io.Reader) {
