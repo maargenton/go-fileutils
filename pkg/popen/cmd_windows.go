@@ -6,8 +6,6 @@ package popen
 import (
 	"context"
 	"os/exec"
-	"syscall"
-	"time"
 )
 
 func (c *Command) configureCommand(cmd *exec.Cmd) {
