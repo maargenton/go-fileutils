@@ -24,10 +24,10 @@ jobs:
           - windows-latest
     steps:
       - name: Checkout repository
-        uses: actions/checkout@v2
+        uses: actions/checkout@v3
 
       - name: Install Go
-        uses: actions/setup-go@v2
+        uses: actions/setup-go@v3
         with:
           go-version: ${{ matrix.go }}
 
@@ -44,7 +44,7 @@ jobs:
 
       - name: Upload coverage
         if: matrix.os != 'windows-latest'
-        uses: codecov/codecov-action@v2
+        uses: codecov/codecov-action@v3
         with:
           # token: ${{ secrets.CODECOV_TOKEN }}
           # fail_ci_if_error: true
