@@ -260,6 +260,12 @@ func TestGlobFrom(t *testing.T) {
 		{`src/**/*_test.{h,hh,hpp}`, 0},
 		{`src/**/*.{h,cpp}`, 12},
 		{`src/foo/foo.cpp`, 1},
+		{`./**/{foo,bar}/**/*_test.{c,cc,cpp}`, 2},
+		{`./src/{foo,bar}/**/*_test.{c,cc,cpp}`, 2},
+		{`./src/**/*_test.{c,cc,cpp}`, 4},
+		{`./src/**/*_test.{h,hh,hpp}`, 0},
+		{`./src/**/*.{h,cpp}`, 12},
+		{`./src/foo/foo.cpp`, 1},
 	}
 	basepath, cleanup, err := setupTestFolder()
 	require.That(t, err).IsNil()
@@ -336,6 +342,11 @@ func TestGlobMatcherScanFrom(t *testing.T) {
 		{`src/**/*_test.{c,cc,cpp}`, 4},
 		{`src/**/*_test.{h,hh,hpp}`, 0},
 		{`src/**/*.{h,cpp}`, 12},
+		{`./**/{foo,bar}/**/*_test.{c,cc,cpp}`, 2},
+		{`./src/{foo,bar}/**/*_test.{c,cc,cpp}`, 2},
+		{`./src/**/*_test.{c,cc,cpp}`, 4},
+		{`./src/**/*_test.{h,hh,hpp}`, 0},
+		{`./src/**/*.{h,cpp}`, 12},
 	}
 	basepath, cleanup, err := setupTestFolder()
 	require.That(t, err).IsNil()
