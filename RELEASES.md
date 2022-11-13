@@ -5,6 +5,10 @@
 - Fix handling of `./` prefix in `dir.GlobMatcher`, `dir.Glob...()` and
   `dir.Scan()`.
 
+## Code changes
+
+- Add graceful shutdown options to popen.Command ([#10](https://github.com/maargenton/go-fileutils/pull/10))
+- Fix handling of `./` prefix in glob pattern and filesystem scanning ([#11](https://github.com/maargenton/go-fileutils/pull/11))
 
 
 # v0.6.2
