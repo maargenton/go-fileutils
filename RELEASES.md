@@ -1,3 +1,12 @@
+# v0.6.3
+
+- `popen.Command` now supports graceful shutdown of the child process or child
+  process group on Unix platforms when the associated context is canceled.
+- Fix handling of `./` prefix in `dir.GlobMatcher`, `dir.Glob...()` and
+  `dir.Scan()`.
+
+
+
 # v0.6.2
 
 - `dir.Glob()` and associated function can now match patterns that are an
