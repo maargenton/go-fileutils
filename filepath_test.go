@@ -54,6 +54,7 @@ func TestClean(t *testing.T) {
 		{"/", "/"},
 		{"//", "/"},
 		{"/dev/", "/dev/"},
+		{"./abc", "abc"},
 		{"./abc/", "abc/"},
 		{"./abc//def", "abc/def"},
 		{"aaa/..", "./"},
@@ -64,6 +65,12 @@ func TestClean(t *testing.T) {
 		{"./", "./"},
 		{"", "./"},
 		{"~", "~/"},
+
+		{"./abc/def/*.go", "abc/def/*.go"},
+		{"./**/file.go", "**/file.go"},
+		{"./**/*.go", "**/*.go"},
+		{"./*.go", "*.go"},
+		{"", "./"},
 	}
 
 	for _, tc := range tcs {

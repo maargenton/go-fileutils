@@ -1,6 +1,7 @@
 package dir_test
 
 import (
+	"fmt"
 	"io/fs"
 	"io/ioutil"
 	"os"
@@ -8,8 +9,10 @@ import (
 	"runtime"
 	"testing"
 
+	"github.com/maargenton/go-testpredicate/pkg/bdd"
 	"github.com/maargenton/go-testpredicate/pkg/require"
 	"github.com/maargenton/go-testpredicate/pkg/subexpr"
+	"github.com/maargenton/go-testpredicate/pkg/verify"
 
 	"github.com/maargenton/go-fileutils"
 	"github.com/maargenton/go-fileutils/pkg/dir"
@@ -57,6 +60,33 @@ func TestGlobMatcherMatchWithWildcardStart(t *testing.T) {
 	require.That(t, m.Match("aaa/bbb/src/ccc/ddd/something.cpp")).IsTrue()
 	require.That(t, m.Match("content/aaa/bbb/src/ccc/ddd/something.cpp")).IsTrue()
 	require.That(t, m.Match("content/aaa/bbb/src/ccc/ddd/")).IsFalse()
+}
+
+func TestGlobMatcherMatchExplicit(t *testing.T) {
+	var tcs = []struct {
+		pattern string
+		match   string
+	}{
+		{"glob.go", "glob.go"},
+		{"./glob.go", "glob.go"},
+		{"glob.go", "./glob.go"},
+		{"./glob.go", "./glob.go"},
+	}
+
+	for _, tc := range tcs {
+		bdd.Given(t, fmt.Sprintf("a pattern `%v`", tc.pattern), func(t *bdd.T) {
+			t.When("calling GlobMatcher.Match()", func(t *bdd.T) {
+				m, err := dir.NewGlobMatcher(tc.pattern)
+				require.That(t, err).IsNil()
+				require.That(t, m).IsNotNil()
+
+				t.Then("expected match is true", func(t *bdd.T) {
+					var ctx = require.Context{Name: "match", Value: tc.match}
+					verify.That(t, m.Match(tc.match), ctx).IsTrue()
+				})
+			})
+		})
+	}
 }
 
 // GlobMatcher.Match()
@@ -148,6 +178,30 @@ func TestGlob(t *testing.T) {
 	}
 }
 
+func TestGlobLocal(t *testing.T) {
+	var tcs = []struct {
+		pattern string
+		count   int
+	}{
+		{`glob.go`, 1},
+		{`./glob.go`, 1},
+		{`**/glob.go`, 1},
+		{`./**/glob.go`, 1},
+	}
+
+	for _, tc := range tcs {
+		bdd.Given(t, fmt.Sprintf("a pattern `%v`", tc.pattern), func(t *bdd.T) {
+			t.When("calling `dir.Glob()`", func(t *bdd.T) {
+				matches, err := dir.Glob(tc.pattern)
+				t.Then("the expected number of matches is returned", func(t *bdd.T) {
+					require.That(t, err).IsNil()
+					require.That(t, matches).Length().Eq(tc.count)
+				})
+			})
+		})
+	}
+}
+
 func TestGlobStarFromCurrentDirectory(t *testing.T) {
 	basepath, cleanup, err := setupTestFolder()
 	require.That(t, err).IsNil()
@@ -206,6 +260,12 @@ func TestGlobFrom(t *testing.T) {
 		{`src/**/*_test.{h,hh,hpp}`, 0},
 		{`src/**/*.{h,cpp}`, 12},
 		{`src/foo/foo.cpp`, 1},
+		{`./**/{foo,bar}/**/*_test.{c,cc,cpp}`, 2},
+		{`./src/{foo,bar}/**/*_test.{c,cc,cpp}`, 2},
+		{`./src/**/*_test.{c,cc,cpp}`, 4},
+		{`./src/**/*_test.{h,hh,hpp}`, 0},
+		{`./src/**/*.{h,cpp}`, 12},
+		{`./src/foo/foo.cpp`, 1},
 	}
 	basepath, cleanup, err := setupTestFolder()
 	require.That(t, err).IsNil()
@@ -282,6 +342,11 @@ func TestGlobMatcherScanFrom(t *testing.T) {
 		{`src/**/*_test.{c,cc,cpp}`, 4},
 		{`src/**/*_test.{h,hh,hpp}`, 0},
 		{`src/**/*.{h,cpp}`, 12},
+		{`./**/{foo,bar}/**/*_test.{c,cc,cpp}`, 2},
+		{`./src/{foo,bar}/**/*_test.{c,cc,cpp}`, 2},
+		{`./src/**/*_test.{c,cc,cpp}`, 4},
+		{`./src/**/*_test.{h,hh,hpp}`, 0},
+		{`./src/**/*.{h,cpp}`, 12},
 	}
 	basepath, cleanup, err := setupTestFolder()
 	require.That(t, err).IsNil()

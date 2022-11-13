@@ -72,7 +72,7 @@ type GlobMatcher struct {
 
 // NewGlobMatcher compiles an extended glob pattern into a GlobMatcher
 func NewGlobMatcher(pattern string) (m *GlobMatcher, err error) {
-	var fragments = pattern
+	var fragments = fileutils.Clean(pattern)
 	var subdir = false
 	var prefix = true
 
@@ -113,6 +113,7 @@ func NewGlobMatcher(pattern string) (m *GlobMatcher, err error) {
 // Match returns true if the provided filename matches the compiled glob
 // expressions
 func (m *GlobMatcher) Match(filename string) bool {
+	filename = fileutils.Clean(filename)
 	if !strings.HasPrefix(filename, m.prefix) {
 		return false
 	}
