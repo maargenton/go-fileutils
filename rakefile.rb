@@ -8,6 +8,7 @@
 # =============================================================================
 
 require 'fileutils'
+require 'json'
 
 task default: [:build]
 
@@ -35,6 +36,13 @@ task :clean do
     FileUtils.rm_rf('./build')
 end
 
+
+desc 'Update release notes in preparation for the next release'
+task :'release-prep' do
+    ReleaseHelper.default.pending_pull_requests().each do |pr|
+        puts "- #{pr[:title]} ([##{pr[:number]}](#{pr[:url]}))"
+    end
+end
 
 
 # ----------------------------------------------------------------------------
@@ -125,6 +133,79 @@ class BuildInfo
         host = m[:host]
         host = "github.com" if host.end_with? ("github.com")
         return "https://#{host}/#{m[:path]}/"
+    end
+end
+
+
+
+# ----------------------------------------------------------------------------
+# ReleaseHelper : Helper to extract release information from git and github
+# ----------------------------------------------------------------------------
+
+class ReleaseHelper
+
+    class << self
+        def default() return @default ||= new end
+    end
+
+    def initialize()
+        if _git('rev-parse --is-shallow-repository') == 'true'
+            puts "Fetching missing information from remote ..."
+            system(' git fetch --prune --tags --unshallow')
+        end
+    end
+
+    def log() return @log ||= _log() end
+    def prs() return @prs ||= _prs() end
+
+    def pending_pull_requests()
+        unreleased_commits = log().take_while { |c| (c[:tags]||[]).empty? }
+        pr_index = {}
+        prs().each do |pr|
+            pr_index[pr[:commit]] = pr if pr[:commit]
+        end
+
+        unreleased_commits.flat_map do |commit|
+            hash = commit[:commit]
+            pr = pr_index[hash]
+            (pr && pr[:number]) ? [pr] : []
+        end.sort_by { |pr| pr[:number] }
+    end
+
+    private
+    def _git( cmd ) return `git #{cmd} 2>/dev/null`.strip() end
+    def _gh( cmd )  return `gh #{cmd} 2>/dev/null`.strip()  end
+
+    def _log()
+        log = _git("log --pretty=format:'%H %D'")
+        log.lines.map do |l|
+            hash, all_refs = l.split(' ', 2)
+            hash = hash.strip()
+            all_refs = (all_refs || "").split(',').map {|v| v.strip() }
+            refs = []
+            tags = []
+            all_refs.each do |ref|
+                if ref.start_with?("tag:")
+                    tags += [ref[4..-1].strip]
+                else
+                    refs += [ref]
+                end
+            end
+            { commit: hash, tags: tags, refs: refs }
+        end
+    end
+
+    def _prs()
+        keys = %w(number title url mergeCommit)
+        data = _gh("pr list --state merged --json #{keys.join(',')}")
+        prs = JSON.parse(data)
+        prs.map do |pr|
+            hash = ((pr['mergeCommit'] || {})['oid'] || "")
+            number = pr['number']
+            title = pr['title'] || ""
+            url = pr['url']
+            { commit: hash, title:title, number:number, url:url}
+        end
     end
 end
 

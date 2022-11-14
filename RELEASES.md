@@ -1,3 +1,16 @@
+# v0.6.3
+
+- `popen.Command` now supports graceful shutdown of the child process or child
+  process group on Unix platforms when the associated context is canceled.
+- Fix handling of `./` prefix in `dir.GlobMatcher`, `dir.Glob...()` and
+  `dir.Scan()`.
+
+## Code changes
+
+- Add graceful shutdown options to popen.Command ([#10](https://github.com/maargenton/go-fileutils/pull/10))
+- Fix handling of `./` prefix in glob pattern and filesystem scanning ([#11](https://github.com/maargenton/go-fileutils/pull/11))
+
+
 # v0.6.2
 
 - `dir.Glob()` and associated function can now match patterns that are an
