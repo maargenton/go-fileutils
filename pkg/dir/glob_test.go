@@ -3,7 +3,6 @@ package dir_test
 import (
 	"fmt"
 	"io/fs"
-	"io/ioutil"
 	"os"
 	"path"
 	"runtime"
@@ -14,7 +13,6 @@ import (
 	"github.com/maargenton/go-testpredicate/pkg/subexpr"
 	"github.com/maargenton/go-testpredicate/pkg/verify"
 
-	"github.com/maargenton/go-fileutils"
 	"github.com/maargenton/go-fileutils/pkg/dir"
 )
 
@@ -398,31 +396,3 @@ func TestGlobFunctionsErrorWithBadPattern(t *testing.T) {
 
 // Test error path for dir.Glob, dir.GlobFrom, dir.Scan, dir.ScanFrom
 // ---------------------------------------------------------------------------
-
-// ---------------------------------------------------------------------------
-// Helpers
-// ---------------------------------------------------------------------------
-
-func setupTestFolder() (basepath string, cleanup func(), err error) {
-	basepath, err = ioutil.TempDir(".", "testdata-")
-	basepath = fileutils.Clean(basepath)
-	cleanup = func() {
-		if basepath != "" {
-			os.RemoveAll(basepath)
-		}
-	}
-	if err != nil {
-		return
-	}
-
-	var filenames []string
-	for _, n := range []string{"foo", "bar", "aaa", "bbb"} {
-		filenames = append(filenames,
-			fileutils.Join(basepath, "src", n, n+".h"),
-			fileutils.Join(basepath, "src", n, n+".cpp"),
-			fileutils.Join(basepath, "src", n, n+"_test.cpp"),
-		)
-	}
-	err = fileutils.Touch(filenames...)
-	return
-}
