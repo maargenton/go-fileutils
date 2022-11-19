@@ -1,3 +1,14 @@
+# v0.6.4
+
+- Fix issue with `dir.Glob('**/*')` not scanning subdirectories.
+- Move `Walk()` function and associated definition to `dir` sub-package.
+
+## Code changes
+
+- Move `Walk()` function to `dir` sub-package ([#13](https://github.com/maargenton/go-fileutils/pull/13))
+- Fix issue with `dir.Glob('**/*')` not scanning subdirectories ([#14](https://github.com/maargenton/go-fileutils/pull/14))
+
+
 # v0.6.3
 
 - `popen.Command` now supports graceful shutdown of the child process or child
