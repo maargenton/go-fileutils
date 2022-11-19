@@ -5,10 +5,11 @@ import (
 	"runtime"
 	"testing"
 
-	"github.com/maargenton/go-fileutils/pkg/dir"
 	"github.com/maargenton/go-testpredicate/pkg/require"
 	"github.com/maargenton/go-testpredicate/pkg/subexpr"
 	"github.com/maargenton/go-testpredicate/pkg/verify"
+
+	"github.com/maargenton/go-fileutils/pkg/dir"
 )
 
 func TestWalkWithPrefix(t *testing.T) {
