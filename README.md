@@ -76,7 +76,7 @@ platform-specific special cases in most instances.
 
 ### Filesystem scanning and globing
 
-`fileutils.Walk()` implements an enhanced version of `filepath.WalkDir()` that
+`dir.Walk()` implements an enhanced version of `filepath.WalkDir()` that
 follows symlinks safely and adds some flexibility in the way paths are reported.
 
 `dir.Glob()` and `dir.Scan()` are convenient functions to locate and
