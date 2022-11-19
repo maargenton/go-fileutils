@@ -209,14 +209,7 @@ func (m *GlobMatcher) ScanFrom(basepath string, walkFn fs.WalkDirFunc) error {
 			return SkipDir
 		}
 		if m.Match(path) {
-			err = walkFn(path, d, err)
-
-			// If path is a match for the full pattern and a directory, there is
-			// no need t ogo further in.
-			if d != nil && d.IsDir() && err == nil {
-				err = SkipDir
-			}
-			return err
+			return walkFn(path, d, err)
 		}
 		return nil // Ignore any error if no match
 	}

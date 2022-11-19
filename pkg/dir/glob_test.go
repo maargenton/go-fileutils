@@ -155,8 +155,9 @@ func TestGlob(t *testing.T) {
 		{`src/{foo,bar}/**/*_test.{c,cc,cpp}`, 2},
 		{`src/**/*_test.{c,cc,cpp}`, 4},
 		{`src/**/*_test.{h,hh,hpp}`, 0},
-		{`src/**/*.{h,cpp}`, 12},
 		{`src/foo/foo.cpp`, 1},
+		{`src/**/*.{h,cpp}`, 12}, // 12 = all files
+		{`**/*`, 17},             // 17 = all nested files and intermediate directories
 	}
 
 	basepath, cleanup, err := setupTestFolder()
@@ -302,7 +303,10 @@ func TestScan(t *testing.T) {
 		{`src/{foo,bar}/**/*_test.{c,cc,cpp}`, 2},
 		{`src/**/*_test.{c,cc,cpp}`, 4},
 		{`src/**/*_test.{h,hh,hpp}`, 0},
-		{`src/**/*.{h,cpp}`, 12},
+		{`src/foo/foo.cpp`, 1},
+		{`src/**/*.{h,cpp}`, 12}, // 12 = all files
+		{`**/*`, 17},             // 17 = all nested files and intermediate directories
+
 	}
 	basepath, cleanup, err := setupTestFolder()
 	require.That(t, err).IsNil()
