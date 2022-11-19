@@ -1,4 +1,4 @@
-package fileutils
+package dir
 
 import (
 	"fmt"
@@ -8,9 +8,10 @@ import (
 	"strings"
 
 	"github.com/maargenton/go-errors"
+	"github.com/maargenton/go-fileutils"
 )
 
-// SkipDir is an alias of `filepath.SkipDir`, used as a sentinel diring directory
+// SkipDir is an alias of `filepath.SkipDir`, used as a sentinel during directory
 // traversal to prevent any deeper recursion into a directory.
 var SkipDir = filepath.SkipDir
 
@@ -39,15 +40,15 @@ func Walk(prefix, root string, fn fs.WalkDirFunc) error {
 }
 
 func walk(prefix, root string, fn fs.WalkDirFunc) error {
-	walkRoot := Join(prefix, root)
+	walkRoot := fileutils.Join(prefix, root)
 	if filepath.IsAbs(root) {
-		walkRoot = Clean(root)
+		walkRoot = fileutils.Clean(root)
 		prefix = ""
 	} else {
 		if len(prefix) > 0 {
 			prefix += string(filepath.Separator)
 		}
-		prefix = Clean(prefix)
+		prefix = fileutils.Clean(prefix)
 	}
 
 	f := func(path string, d fs.DirEntry, err error) error {
@@ -57,7 +58,7 @@ func walk(prefix, root string, fn fs.WalkDirFunc) error {
 		if strings.HasPrefix(path, prefix) {
 			path = path[len(prefix):]
 		} else {
-			relpath, relerr := Rel(prefix, path)
+			relpath, relerr := fileutils.Rel(prefix, path)
 			if relerr != nil {
 				return fmt.Errorf(
 					"WalkDir yielded a path '%v' that is not relative to the root path '%v'",
@@ -68,7 +69,7 @@ func walk(prefix, root string, fn fs.WalkDirFunc) error {
 		if len(path) > 0 && d != nil && d.IsDir() {
 			path += string(filepath.Separator)
 		}
-		path = Clean(path)
+		path = fileutils.Clean(path)
 		return fn(path, d, err)
 	}
 
@@ -77,7 +78,7 @@ func walk(prefix, root string, fn fs.WalkDirFunc) error {
 
 func makeSymlinkWalkFunc(visited []string, basepath, clientPrefix string, clientFn fs.WalkDirFunc) fs.WalkDirFunc {
 	f := func(path string, d fs.DirEntry, err error) error {
-		clientPath := Join(clientPrefix, path)
+		clientPath := fileutils.Join(clientPrefix, path)
 		if err != nil {
 			return clientFn(clientPath, d, err)
 		}
@@ -86,7 +87,7 @@ func makeSymlinkWalkFunc(visited []string, basepath, clientPrefix string, client
 			return clientFn(clientPath, d, err)
 		}
 
-		linkpath := Join(basepath, path)
+		linkpath := fileutils.Join(basepath, path)
 		realpath, err := filepath.EvalSymlinks(linkpath)
 		if err != nil {
 			return clientFn(clientPath, d, err)
@@ -97,7 +98,7 @@ func makeSymlinkWalkFunc(visited []string, basepath, clientPrefix string, client
 		}
 		d = fs.FileInfoToDirEntry(info)
 		if info.IsDir() {
-			clientPath = Join(clientPath, "")
+			clientPath = fileutils.Join(clientPath, "")
 		}
 
 		// Check if visited and recurse

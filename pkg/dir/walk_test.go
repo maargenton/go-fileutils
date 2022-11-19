@@ -1,12 +1,12 @@
-package fileutils_test
+package dir_test
 
 import (
 	"io/fs"
-	"io/ioutil"
 	"os"
 	"runtime"
 	"testing"
 
+	"github.com/maargenton/go-fileutils/pkg/dir"
 	"github.com/maargenton/go-testpredicate/pkg/require"
 	"github.com/maargenton/go-testpredicate/pkg/subexpr"
 	"github.com/maargenton/go-testpredicate/pkg/verify"
@@ -18,7 +18,7 @@ func TestWalkWithPrefix(t *testing.T) {
 	var records []string
 	var f = makeWalkDirPathRecorder(&records, nil)
 
-	err := fileutils.Walk("testdata", "", f)
+	err := dir.Walk("testdata", "", f)
 	verify.That(t, err).IsError(nil)
 
 	verify.That(t, records).IsEqualSet([]string{
@@ -35,7 +35,7 @@ func TestWalkWithRoot(t *testing.T) {
 	var records []string
 	var f = makeWalkDirPathRecorder(&records, nil)
 
-	err := fileutils.Walk("", "testdata", f)
+	err := dir.Walk("", "testdata", f)
 	verify.That(t, err).IsError(nil)
 	verify.That(t, records).IsEqualSet([]string{
 		"testdata/src/",
@@ -51,7 +51,7 @@ func TestWalkWithNoRootNoPrefix(t *testing.T) {
 	var records []string
 	var f = makeWalkDirPathRecorder(&records, nil)
 
-	err := fileutils.Walk("", "", f)
+	err := dir.Walk("", "", f)
 	verify.That(t, err).IsError(nil)
 	verify.That(t, records).IsSupersetOf([]string{
 		"testdata/",
@@ -72,7 +72,7 @@ func TestWalkFromFsRoot(t *testing.T) {
 	var f = makeWalkDirPathRecorder(&records, skipDirFunc)
 
 	if runtime.GOOS == "windows" {
-		err := fileutils.Walk("", "C:/", f)
+		err := dir.Walk("", "C:/", f)
 		verify.That(t, err).IsError(nil)
 		verify.That(t, records).IsSupersetOf([]string{
 			"C:/Documents and Settings/",
@@ -83,7 +83,7 @@ func TestWalkFromFsRoot(t *testing.T) {
 		})
 
 	} else {
-		err := fileutils.Walk("", "/", f)
+		err := dir.Walk("", "/", f)
 		verify.That(t, err).IsError(nil)
 		verify.That(t, records).IsSupersetOf([]string{
 			"/bin/",
@@ -107,7 +107,7 @@ func TestSymlinks(t *testing.T) {
 	var records []string
 	var f = makeWalkDirPathRecorder(&records, nil)
 
-	err = fileutils.Walk(basepath, "", f)
+	err = dir.Walk(basepath, "", f)
 	verify.That(t, err).IsNil()
 	verify.That(t, records).Any(subexpr.Value().StartsWith("src/foo/"))
 	verify.That(t, records).Any(subexpr.Value().StartsWith("src/bar/"))
@@ -125,10 +125,10 @@ func TestSymlinksRecursion(t *testing.T) {
 	var records []walkErrorRecord
 	var f = makeWalkDirErrorRecorder(&records, nil)
 
-	err = fileutils.Walk(basepath, "", f)
+	err = dir.Walk(basepath, "", f)
 	verify.That(t, err).IsNil()
 	verify.That(t, records).Field("Err").All(
-		subexpr.Value().IsError(fileutils.ErrRecursiveSymlink),
+		subexpr.Value().IsError(dir.ErrRecursiveSymlink),
 	)
 	verify.That(t, records).Field("Path").IsEqualSet([]string{
 		"dst/src/",
@@ -145,7 +145,7 @@ func TestSymlinksBroken(t *testing.T) {
 	var records []walkErrorRecord
 	var f = makeWalkDirErrorRecorder(&records, nil)
 
-	err = fileutils.Walk(basepath, "", f)
+	err = dir.Walk(basepath, "", f)
 	verify.That(t, err).IsNil()
 	verify.That(t, records).Field("Path").IsEqualSet([]string{
 		"src/src3",
@@ -158,28 +158,28 @@ func TestSymlinksBroken(t *testing.T) {
 // ---------------------------------------------------------------------------
 // Helpers
 
-func setupTestFolder() (basepath string, cleanup func(), err error) {
-	basepath, err = ioutil.TempDir(".", "testdata-")
-	cleanup = func() {
-		if basepath != "" {
-			os.RemoveAll(basepath)
-		}
-	}
-	if err != nil {
-		return
-	}
+// func setupTestFolder() (basepath string, cleanup func(), err error) {
+// 	basepath, err = ioutil.TempDir(".", "testdata-")
+// 	cleanup = func() {
+// 		if basepath != "" {
+// 			os.RemoveAll(basepath)
+// 		}
+// 	}
+// 	if err != nil {
+// 		return
+// 	}
 
-	var filenames []string
-	for _, n := range []string{"foo", "bar"} {
-		filenames = append(filenames,
-			fileutils.Join(basepath, "src", n, n+".h"),
-			fileutils.Join(basepath, "src", n, n+".cpp"),
-			fileutils.Join(basepath, "src", n, n+"_test.cpp"),
-		)
-	}
-	err = fileutils.Touch(filenames...)
-	return
-}
+// 	var filenames []string
+// 	for _, n := range []string{"foo", "bar"} {
+// 		filenames = append(filenames,
+// 			fileutils.Join(basepath, "src", n, n+".h"),
+// 			fileutils.Join(basepath, "src", n, n+".cpp"),
+// 			fileutils.Join(basepath, "src", n, n+"_test.cpp"),
+// 		)
+// 	}
+// 	err = fileutils.Touch(filenames...)
+// 	return
+// }
 
 func setupTestFolderWithSymlinks(recursive, broken bool) (basepath string, cleanup func(), err error) {
 	basepath, cleanup, err = setupTestFolder()

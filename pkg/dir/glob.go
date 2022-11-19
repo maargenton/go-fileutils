@@ -206,7 +206,7 @@ func (m *GlobMatcher) Scan(walkFn fs.WalkDirFunc) error {
 func (m *GlobMatcher) ScanFrom(basepath string, walkFn fs.WalkDirFunc) error {
 	f := func(path string, d fs.DirEntry, err error) error {
 		if d != nil && d.IsDir() && !m.PrefixMatch(path) {
-			return fileutils.SkipDir
+			return SkipDir
 		}
 		if m.Match(path) {
 			err = walkFn(path, d, err)
@@ -214,14 +214,14 @@ func (m *GlobMatcher) ScanFrom(basepath string, walkFn fs.WalkDirFunc) error {
 			// If path is a match for the full pattern and a directory, there is
 			// no need t ogo further in.
 			if d != nil && d.IsDir() && err == nil {
-				err = fileutils.SkipDir
+				err = SkipDir
 			}
 			return err
 		}
 		return nil // Ignore any error if no match
 	}
 
-	return fileutils.Walk(basepath, m.prefix, f)
+	return Walk(basepath, m.prefix, f)
 }
 
 // GlobMatcher
